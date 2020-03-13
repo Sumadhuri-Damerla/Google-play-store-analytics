@@ -1,0 +1,199 @@
+---
+title: "Google Play Store Analytics"
+output: html_document
+---
+
+# 
+```{r Library}
+
+library(VIM)
+library(mice)
+library(tidyverse)
+library(magrittr)
+library(dplyr)
+# library(data.table)
+library(stringr)
+library(xlsx)
+
+
+```
+
+
+
+# 
+```{r import}
+
+
+
+play_store <- read.csv("data/googleplaystore.csv",  header = TRUE, stringsAsFactors = FALSE)
+user_review <- read.csv("data/googleplaystore_user_reviews.csv",  header = TRUE, stringsAsFactors = FALSE)
+
+
+
+
+```
+
+
+# Tidy Data
+```{r Tidy Data}
+
+# changed column names 
+column_name <- c("app", "category", "rating", "reviews", "size_mb", "installs", "types", "price", "content_rating", "genres", "last_update", "current_ver", "android_ver")
+colnames(play_store) <- column_name
+
+summary(play_store)
+str(play_store)
+
+
+
+
+```
+
+
+
+# Tidy Data
+## Number of apps in the dataset 
+```{r Visualization:  Number of apps in the dataset }
+
+ length(unique(play_store$App))
+
+```
+
+## Removing duplicate values
+```{r Removing duplicate values}
+
+
+# number of unique apps
+# functions used: unique(), duplicated(), distinct()
+
+
+# unq_apps <- unique(play_store$App)
+#  length(unq_apps)
+
+# number of unique rows
+# unq_play_store <- distinct(play_store)
+# unq_play_store
+
+
+#  Observations: Dataset include two different observations for the same app, with different reviews (number of reviews), we chose the lesser number, so not to create overly optimistic results 
+# another option is to take mean of the duplicate values and use it instead  
+
+arranged_data_set <- play_store %>% 
+                      arrange(app, desc(reviews))
+
+dpl_value <- which(!duplicated(arranged_data_set$app))  
+
+unq_play_store_1 <- arranged_data_set[dpl_value,]
+
+
+
+```
+
+
+
+## Missing data
+```{r}
+
+colSums(is.na(unq_play_store_1))
+
+
+
+no_NA <- which(is.na(unq_play_store_1$rating))
+
+# graph
+md.pattern(unq_play_store_1, rotate.names = 90)
+
+
+# graph
+mice_plot <- aggr(unq_play_store_1, col=c('navyblue','yellow'),
+ numbers=TRUE, sortVars=TRUE,
+ labels=names(unq_play_store_1), cex.axis=.7,
+ gap=3, ylab=c("Missing data","Pattern"))
+
+# Data for app "Life Made WI-Fi Touchscreen Photo Frame" removed (wrong ratting, reviews, size e.t.c)
+unq_play_store_1 <- unq_play_store_1[unq_play_store_1$app != "Life Made WI-Fi Touchscreen Photo Frame", ]
+
+
+# removing columns that have reviews but have NaN rating
+unq_play_store_1 <- subset(unq_play_store_1, !(is.na(unq_play_store_1$rating) & !unq_play_store_1$reviews == "0" ))
+
+# converting reviews to numeric
+unq_play_store_1$reviews <- as.numeric(unq_play_store_1$reviews)
+
+
+# mputed_Data <- mice(unq_play_store_1, m=1, maxit = 50, method = 'pmm', seed = 500)
+# summary(mputed_Data)
+
+# remove "Life Made WI-Fi Touchscreen Photo Frame"
+
+
+```
+
+
+
+## Convert all app sizes to MB
+```{r Convert all app sizes to MB}
+
+# changing all app sizes to MB
+# new_unq <- unq_play_store_1 %>% 
+#  filter(str_detect(size_mb, "^K"))
+
+selectedRows <- grep("k", unq_play_store_1$size_mb)
+
+unq_play_store_1$size_mb <- gsub('k', '', unq_play_store_1$size_mb)
+
+unq_play_store_1$size_mb[selectedRows] <- as.numeric(unq_play_store_1$size_mb[selectedRows])  / 1000
+
+
+unq_play_store_1$size_mb <- gsub('M', '', unq_play_store_1$size_mb)
+
+
+```
+
+
+## Convert installs into numeric and remove "+", ","
+```{r}
+
+# unq_play_store_1$installs <- gsub(',', '', unq_play_store_1$installs)
+
+unq_play_store_1$installs <- gsub('[[:punct:]]', '', unq_play_store_1$installs)
+
+unq_play_store_1$price <- gsub( "as.character($)", '', unq_play_store_1$price, fixed = FALSE)
+
+
+# unq_play_store_1 %>% 
+#  mutate_at(vars(price), ~na_if('$' , ''))
+
+
+```
+
+
+# seperate content rating column 
+```{r}
+
+
+```
+
+
+
+
+
+
+
+
+# Exporting data to excel
+```{r}
+
+
+# write.xlsx(unq_play_store_1, "mydata.xlsx")
+
+
+
+
+```
+
+
+
+
+
+
