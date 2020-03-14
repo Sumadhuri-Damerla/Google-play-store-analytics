@@ -26,7 +26,7 @@ library(tidyverse)
 library(magrittr)
 library(dplyr)
 library(stringr)
-#library(xlsx)
+library(xlsx)
 ```
 
 ## Analysis
@@ -139,18 +139,10 @@ new_play_store$reviews <- as.numeric(new_play_store$reviews)
 ```{r Convert all app sizes to MB}
 
 # changing all app sizes to MB
-# new_unq <- new_play_store %>% 
-#  filter(str_detect(size_mb, "^K"))
-
 selectedRows <- grep("k", new_play_store$size_mb)
-
 new_play_store$size_mb <- gsub('k', '', new_play_store$size_mb)
-
-new_play_store$size_mb[selectedRows] <- as.numeric(new_play_store$size_mb[selectedRows])  / 1000
-
-
 new_play_store$size_mb <- gsub('M', '', new_play_store$size_mb)
-
+new_play_store$size_mb[selectedRows] <- as.numeric(new_play_store$size_mb[selectedRows])  / 1024
 
 ```
 
@@ -162,12 +154,19 @@ new_play_store$size_mb <- gsub('M', '', new_play_store$size_mb)
 
 new_play_store$installs <- gsub('[[:punct:]]', '', new_play_store$installs)
 
-new_play_store$price <- gsub( "as.character($)", '', new_play_store$price, fixed = FALSE)
+
+new_play_store$installs <- as.numeric(new_play_store$installs)
 
 
-# new_play_store %>% 
-#  mutate_at(vars(price), ~na_if('$' , ''))
+```
 
+
+#### Convert price into numeric and rmove '$'
+```{r}
+
+new_play_store$price <- gsub( "\\$", '', new_play_store$price)
+
+new_play_store$price <- as.numeric(new_play_store$price)
 
 ```
 
@@ -176,17 +175,41 @@ new_play_store$price <- gsub( "as.character($)", '', new_play_store$price, fixed
 ```{r}
 
 
+
+new_play_store$content_rating <- gsub( '\\+', '', new_play_store$content_rating )
+
+new_play_store <-  new_play_store %>% 
+  separate(content_rating, c("content_ratting", "min_age"), convert = TRUE, sep = "\\s+(?=\\S*$)")
+
 ```
+
+
+#### Convert last_update column into date
+```{r}
+
+ new_play_store$last_update <- as.Date(new_play_store$last_update, format = "%d-%b-%y")
+
+
+```
+
+
+#### android version column 
+```{r}
+
+
+new_play_store <-  new_play_store %>% 
+  separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s")
+
+
+```
+
+
 
 
 #### Exporting data to excel
 ```{r}
 
-
 # write.xlsx(new_play_store, "mydata.xlsx")
-
-
-
 
 ```
 
