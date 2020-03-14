@@ -45,7 +45,7 @@ The loaded play store data contains `r play_store %>% count()` rows and the user
 ```{r Tidy Data}
 
 # changing column names to remove spaces and other special characters and to maintain consistency
-colnames(play_store) <- c("app", "category", "rating", "reviews", "size_mb", "installs", "types", "price", "content_rating", "genres", "last_update", "current_ver", "android_ver")
+colnames(play_store) <- c("app", "category", "ratting", "reviews", "size_mb", "installs", "types", "price", "content_ratting", "genres", "last_update", "current_ver", "android_ver")
 
 #viewing data
 summary(play_store)
@@ -79,7 +79,7 @@ As can be seen from the table, the data contains missing values, duplicates and 
 # unq_play_store
 
 
-#  Observations: Dataset include two different observations for the same app, with different reviews (number of reviews), we chose the lesser number, so not to create overly optimistic results 
+#  Observations: Dataset include two different observations for the same app, with different reviews (number of reviews), we kept the lesser number, so not to create overly optimistic results
 # another option is to take mean of the duplicate values and use it instead  
 
 arranged_data_set <- play_store %>% 
@@ -100,16 +100,13 @@ new_play_store <- arranged_data_set[dpl_value,]
 
 colSums(is.na(new_play_store))
 
+# no_NA <- which(is.na(new_play_store$rating))
 
-
-no_NA <- which(is.na(new_play_store$rating))
-
-# graph
-md.pattern(new_play_store, rotate.names = 90)
-
+# pattern graph
+# md.pattern(new_play_store, rotate.names = 90)
 
 # graph
-mice_plot <- aggr(new_play_store, col=c('navyblue','yellow'),
+mis_data_pattern <- aggr(new_play_store, col=c('navyblue','yellow'),
  numbers=TRUE, sortVars=TRUE,
  labels=names(new_play_store), cex.axis=.7,
  gap=3, ylab=c("Missing data","Pattern"))
@@ -118,17 +115,12 @@ mice_plot <- aggr(new_play_store, col=c('navyblue','yellow'),
 new_play_store <- new_play_store[new_play_store$app != "Life Made WI-Fi Touchscreen Photo Frame", ]
 
 
-# removing columns that have reviews but have NaN rating
-new_play_store <- subset(new_play_store, !(is.na(new_play_store$rating) & !new_play_store$reviews == "0" ))
+# removing observations with reviews but NaN rating
+new_play_store <- subset(new_play_store, !(is.na(new_play_store$ratting) & !new_play_store$reviews == "0" ))
 
 # converting reviews to numeric
 new_play_store$reviews <- as.numeric(new_play_store$reviews)
 
-
-# mputed_Data <- mice(new_play_store, m=1, maxit = 50, method = 'pmm', seed = 500)
-# summary(mputed_Data)
-
-# remove "Life Made WI-Fi Touchscreen Photo Frame"
 
 
 ```
@@ -147,39 +139,38 @@ new_play_store$size_mb[selectedRows] <- as.numeric(new_play_store$size_mb[select
 ```
 
 
-#### Convert installs into numeric and remove "+", ","
+#### install column: remove "+", "," and convert into numeric 
 ```{r}
 
-# new_play_store$installs <- gsub(',', '', new_play_store$installs)
-
+# removing "+", ","
 new_play_store$installs <- gsub('[[:punct:]]', '', new_play_store$installs)
 
-
+# convert into numeric 
 new_play_store$installs <- as.numeric(new_play_store$installs)
 
 
 ```
 
 
-#### Convert price into numeric and rmove '$'
+####  price column: rmove '$' and convert into numeric
 ```{r}
-
+# removing "$"
 new_play_store$price <- gsub( "\\$", '', new_play_store$price)
 
+# convert into numeric 
 new_play_store$price <- as.numeric(new_play_store$price)
 
 ```
 
 
-#### seperate content rating column 
+#### seperate content ratting column 
 ```{r}
 
 
-
-new_play_store$content_rating <- gsub( '\\+', '', new_play_store$content_rating )
+new_play_store$content_ratting <- gsub( '\\+', '', new_play_store$content_ratting )
 
 new_play_store <-  new_play_store %>% 
-  separate(content_rating, c("content_ratting", "min_age"), convert = TRUE, sep = "\\s+(?=\\S*$)")
+  separate(content_ratting, c("content_ratting", "min_age"), convert = TRUE, sep = "\\s+(?=\\S*$)")
 
 ```
 
@@ -196,9 +187,21 @@ new_play_store <-  new_play_store %>%
 #### android version column 
 ```{r}
 
+ver_dev_rows <- grep("Varies with device", new_play_store$android_ver)
+
+new_play_store_temp <- new_play_store$android_ver[ver_dev_rows]
+
+
+# Fill with "Varies with device"
+new_play_store[ver_dev_rows, "min_android_ver"] <- new_play_store_temp
+
+
+
 
 new_play_store <-  new_play_store %>% 
-  separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s")
+  separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
+
+
 
 
 ```
@@ -217,6 +220,7 @@ new_play_store <-  new_play_store %>%
 ## EDA
 Now, we use the tidy data and explore different aspects of the dataset
 ```{r}
+
 str(new_play_store)
 
 ```
