@@ -27,33 +27,130 @@ library(magrittr)
 library(dplyr)
 library(stringr)
 library(xlsx)
+library(wesanderson) # For colors
+
+theme_set(theme_minimal())
+
 ```
 
-## Analysis
+### Custom color pallet
+Research has shown that specific concepts and phenomenon are associated with specific colors e.g money is most often associated with green color, oceans with blue and love with red. When colors are associated with the concepts that evoke them, this is called “semantically resonant color choices.” This concept is remarkably important for data visualization, and its effective communication. For this purpose, we created a custom color pallet, containing colors that are associated with the concepts of our dataset. This also help us be consistent with our choices of colors. 
+Keeping in view accessibility, we have used colors that are color blind friendly. 
+```{r }
+custom_colors <- c(
+  `red`             = "#d11141",
+  `blueish green`   = "#009E73",
+  `blue`            = "#0072B2",
+  `sky blue`        = "#56B4E9",
+  `orange`          = "#E69F00",
+  `vermillion`      = "#D55E00",
+  `yellow`          = "#009E73",
+  `grey`            = "#999999",
+  `reddidh purple`  = "#CC79A7"
+  )
 
-### Data
-```{r loading_data}
+custom_cols <- function(...) {
+  cols <- c(...)
+  
+  if (is.null(cols))
+    return (custom_colors)
+  
+  custom_colors[cols]
+}
+
+custom_palettes <- list(
+  `main`  = custom_cols("blue", "green", "yellow"),
+  
+  `cool`  = custom_cols("blue", "green"),
+  
+  `hot`   = custom_cols("yellow", "orange", "red"),
+  
+  `mixed` = custom_cols("blue", "green", "yellow", "orange", "red"),
+  
+  `grey`  = custom_cols("light grey", "dark grey")
+)
+
+custom_pal <- function(palette = "main", reverse = FALSE, ...) {
+  pal <- custom_palettes[[palette]]
+  
+  if (reverse) pal <- rev(pal)
+  
+  colorRampPalette(pal, ...)
+}
+
+scale_color <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- custom_pal(palette = palette, reverse = reverse)
+
+  if (discrete) {
+    discrete_scale("colour", paste0("drsimonj_", palette), palette = pal, ...)
+  } else {
+    scale_color_gradientn(colours = pal(256), ...)
+  }
+}
+
+scale_fill <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- custom_pal(palette = palette, reverse = reverse)
+
+  if (discrete) {
+    discrete_scale("fill", paste0("drsimonj_", palette), palette = pal, ...)
+  } else {
+    scale_fill_gradientn(colours = pal(256), ...)
+  }
+}
+
+# 
+# ggplot(iris, aes(Sepal.Width, Sepal.Length, color = Sepal.Length)) +
+#     geom_point(size = 4, alpha = .6) +
+#     scale_color(discrete = FALSE, palette = "main")
+
+
+# ggplot(mpg, aes(manufacturer, fill = manufacturer)) +
+#     geom_bar() +
+#     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+#     scale_fill_drsimonj(palette = "mixed", guide = "none")
+
+
+
+```
+
+
+# Data Inportation and Cleaning  
+## Data Import
+Importing data using read_csv() function from readr package, which is part of tidyverse. 
+```{r loading_data, message=FALSE, warning=FALSE}
 
 play_store <- read_csv("data/googleplaystore.csv")
 
 user_review <- read_csv("data/googleplaystore_user_reviews.csv")
 
 ```
-The loaded play store data contains `r play_store %>% count()` rows and the user review data contains `r user_review %>% count()` rows
+The loaded play store data contains `r play_store %>% count()` rows and the user review data contains `r user_review %>% count()` rows. 
 
-### Preprocessing data
+## Preprocessing data
+The column names in the dataset are not in accordance with the good practices and conventions of R, and were replaced with names that are in accordance with the naming conventions in R.  
 ```{r Tidy Data}
-
 # changing column names to remove spaces and other special characters and to maintain consistency
-colnames(play_store) <- c("app", "category", "ratting", "reviews", "size_mb", "installs", "types", "price", "content_ratting", "genres", "last_update", "current_ver", "android_ver")
-
-#viewing data
-summary(play_store)
-str(play_store)
-dim(play_store)
-
+colnames(play_store) <- c("app", "category", "rating", "reviews", "size_mb", "installs", "types", "price", "content_rating", "genres", "last_update", "current_ver", "android_ver")
 ```
-As can be seen from the table, the data contains missing values, duplicates and many inconsistencies. --Add related text here
+
+## Exploring raw data
+### Dimensions of the dataset
+```{r Exploring raw data}
+dim(play_store)
+```
+The dataset contains `r dim(play_store) [1] ` rows and `r dim(play_store) [2] ` columns. By looking deeper into the dataset, it become clear that there are duplicate observations. The number of uniqe values in the column are `r length(unique(play_store$app)) `. Thus, we need to remove `r (dim(play_store) [1] - length(unique(play_store$app))) ` duplicate values.
+
+### Summary of the dataset
+```{r}
+summary(play_store)
+```
+Summary shows that there are `r sum(is.na(play_store$rating))` missing values in rating column and `r sum(is.na(play_store$reviews))` missing value in reviews column. Rating can only be nan or null if the number of reviews are 0. Observations with nan rating and number of reviews are greater than zero does not represent corect data. These rows can either be removed or the nan values can be replaced with the mean rating. The formar aproach will 
+
+### Structure of the dataset
+```{r}
+str(play_store)
+```
+
 
 ### Tidying Data
 #### No. of apps in the dataset
@@ -66,19 +163,6 @@ As can be seen from the table, the data contains missing values, duplicates and 
 #### Removing the duplicate values
 ```{r Removing duplicate values}
 
-
-# number of unique apps
-# functions used: unique(), duplicated(), distinct()
-
-
-# unq_apps <- unique(play_store$App)
-#  length(unq_apps)
-
-# number of unique rows
-# unq_play_store <- distinct(play_store)
-# unq_play_store
-
-
 #  Observations: Dataset include two different observations for the same app, with different reviews (number of reviews), we kept the lesser number, so not to create overly optimistic results
 # another option is to take mean of the duplicate values and use it instead  
 
@@ -90,37 +174,26 @@ dpl_value <- which(!duplicated(arranged_data_set$app))
 new_play_store <- arranged_data_set[dpl_value,]
 
 
-
 ```
 
 
 
 #### Missing data
+Table included missing values.as shown below. 
 ```{r}
 
+# Missing values
 colSums(is.na(new_play_store))
 
-# no_NA <- which(is.na(new_play_store$rating))
 
-# pattern graph
-# md.pattern(new_play_store, rotate.names = 90)
-
-# graph
-mis_data_pattern <- aggr(new_play_store, col=c('navyblue','yellow'),
- numbers=TRUE, sortVars=TRUE,
- labels=names(new_play_store), cex.axis=.7,
- gap=3, ylab=c("Missing data","Pattern"))
-
-# Data for app "Life Made WI-Fi Touchscreen Photo Frame" removed (wrong ratting, reviews, size e.t.c)
+# Data for app "Life Made WI-Fi Touchscreen Photo Frame" removed (wrong rating, reviews, size e.t.c)
 new_play_store <- new_play_store[new_play_store$app != "Life Made WI-Fi Touchscreen Photo Frame", ]
 
-
 # removing observations with reviews but NaN rating
-new_play_store <- subset(new_play_store, !(is.na(new_play_store$ratting) & !new_play_store$reviews == "0" ))
+new_play_store <- subset(new_play_store, !(is.na(new_play_store$rating) & !new_play_store$reviews == "0" ))
 
 # converting reviews to numeric
 new_play_store$reviews <- as.numeric(new_play_store$reviews)
-
 
 
 ```
@@ -132,17 +205,20 @@ new_play_store$reviews <- as.numeric(new_play_store$reviews)
 
 # changing all app sizes to MB
 selectedRows <- grep("k", new_play_store$size_mb)
+
 new_play_store$size_mb <- gsub('k', '', new_play_store$size_mb)
+
 new_play_store$size_mb <- gsub('M', '', new_play_store$size_mb)
+
 new_play_store$size_mb[selectedRows] <- as.numeric(new_play_store$size_mb[selectedRows])  / 1024
 
 ```
 
 
 #### install column: remove "+", "," and convert into numeric 
-```{r}
+```{r install column}
 
-# removing "+", ","
+# removing "+", "," from install 
 new_play_store$installs <- gsub('[[:punct:]]', '', new_play_store$installs)
 
 # convert into numeric 
@@ -152,8 +228,9 @@ new_play_store$installs <- as.numeric(new_play_store$installs)
 ```
 
 
-####  price column: rmove '$' and convert into numeric
+####  Price column: rmove '$' and convert into numeric
 ```{r}
+
 # removing "$"
 new_play_store$price <- gsub( "\\$", '', new_play_store$price)
 
@@ -163,14 +240,15 @@ new_play_store$price <- as.numeric(new_play_store$price)
 ```
 
 
-#### seperate content ratting column 
-```{r}
+#### Seperate content rating column 
+```{r message=FALSE}
 
+# Remove '+' from content_ratting column
+new_play_store$content_rating <- gsub( '\\+', '', new_play_store$content_rating )
 
-new_play_store$content_ratting <- gsub( '\\+', '', new_play_store$content_ratting )
-
+# Split content_rating into two columns i.e. "content_rating" and "min_age"
 new_play_store <-  new_play_store %>% 
-  separate(content_ratting, c("content_ratting", "min_age"), convert = TRUE, sep = "\\s+(?=\\S*$)")
+  separate(content_rating, c("content_rating", "min_age"), convert = TRUE, sep = "\\s+(?=\\S*$)")
 
 ```
 
@@ -180,28 +258,26 @@ new_play_store <-  new_play_store %>%
 
  new_play_store$last_update <- as.Date(new_play_store$last_update, format = "%d-%b-%y")
 
-
 ```
 
 
-#### android version column 
+
+#### android_ver column 
 ```{r}
 
-ver_dev_rows <- grep("Varies with device", new_play_store$android_ver)
-
-new_play_store_temp <- new_play_store$android_ver[ver_dev_rows]
-
-
-# Fill with "Varies with device"
-new_play_store[ver_dev_rows, "min_android_ver"] <- new_play_store_temp
-
-
-
-
-new_play_store <-  new_play_store %>% 
-  separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
-
-
+# ver_dev_rows <- grep("Varies with device", new_play_store$android_ver)
+# 
+# new_play_store_temp <- new_play_store$android_ver[ver_dev_rows]
+# 
+# 
+# # Fill with "Varies with device"
+# new_play_store[ver_dev_rows, "min_android_ver"] <- new_play_store_temp
+# 
+# 
+# new_play_store <-  new_play_store %>% 
+#   separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
+# 
+# 
 
 
 ```
@@ -217,13 +293,57 @@ new_play_store <-  new_play_store %>%
 ```
 
 ### Results
-## EDA
-Now, we use the tidy data and explore different aspects of the dataset
+
+# EDA
+
+
+### Average rating of apps
 ```{r}
 
-str(new_play_store)
+mean(new_play_store$rating, na.rm = TRUE)
+
+base <- ggplot(new_play_store, aes(x = new_play_store$rating))
+base + geom_bar(na.rm = TRUE)
+
+
+base + 
+  geom_bar(na.rm = TRUE) + 
+  facet_wrap(~new_play_store$category)
+
+
+# Average 
+  new_play_store %>% 
+  select(c("category", "rating")) %>% 
+  group_by(category) %>% 
+  summarise(rating = mean(rating, na.rm = TRUE)) %>% 
+  ggplot(aes(category, rating)) + 
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_fill(palette = "mixed", guide = "none")
+  
+  
+
+new_play_store %>% 
+  filter(size_mb != "Varies with device") %>% 
+  select( c("category", "size_mb")) %>%   # Removes rows with Varies with device 
+  group_by(category) %>% 
+  summarise(size_mb = mean(as.numeric(size_mb), na.rm = TRUE)) %>% 
+  ggplot(aes(category, size_mb)) + 
+  geom_col(color = custom_cols("red"), fill = custom_cols("red"),alpha = .3) + 
+  theme(axis.text.x = element_text(angle = 90)) 
+  
+
 
 ```
+
+
+
+
+
+
+
+
+
 
 
 
