@@ -19,16 +19,17 @@ The **google play store analytics** [dataset](https://www.kaggle.com/lava18/goog
 ### 1.Loading necessary packages
 ```{r loading_libraries,message=FALSE, warning=FALSE}
 
-library(VIM)
-library(mice)
+# library(VIM)
+# library(mice)
 library(tidyverse)
-library(magrittr)
+# library(magrittr)
 library(dplyr)
 library(stringr)
 library(xlsx)
-library(wesanderson) # For colors
+# library(wesanderson) # For colors
 library(xts)
 library(highcharter)
+library(ggExtra) # For marginal graphs
 #library(xlsx)
 #library(reticulate) #bridges python and R
 theme_set(theme_minimal())
@@ -271,7 +272,24 @@ diff
    clean_app_store$last_update <- as.Date(clean_app_store$last_update, format = "%d-%b-%y")
   
 
-#### android version column ####
+```
+
+
+
+
+
+
+
+```{r }
+
+#### current version column ####
+  
+# write.xlsx(clean_app_store, "mydata.xlsx")
+  
+# # convert into numeric 
+#   clean_app_store$current_ver <- as.numeric(clean_app_store$current_ver)
+#   
+  
   ver_dev_rows <- grep("Varies with device", clean_app_store$android_ver)
   clean_app_store_temp <- clean_app_store$android_ver[ver_dev_rows]
   
@@ -280,8 +298,7 @@ diff
   #clean_app_store <-  clean_app_store %>% 
    # separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
   
-  # convert into numeric 
-  clean_app_store$current_ver <- as.numeric(clean_app_store$current_ver)
+
 
 #  write.xlsx(clean_app_store, "mydata.xlsx")
   
@@ -289,21 +306,21 @@ diff
 #### android_ver column 
 
 
-# ver_dev_rows <- grep("Varies with device", new_play_store$android_ver)
-# 
-# new_play_store_temp <- new_play_store$android_ver[ver_dev_rows]
-# 
-# 
-# # Fill with "Varies with device"
-# new_play_store[ver_dev_rows, "min_android_ver"] <- new_play_store_temp
-# 
-# 
-# new_play_store <-  new_play_store %>% 
-#   separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
-# 
-# 
-```
+ver_dev_rows <- grep("Varies with device", new_play_store$android_ver)
 
+new_play_store_temp <- new_play_store$android_ver[ver_dev_rows]
+
+
+# Fill with "Varies with device"
+new_play_store[ver_dev_rows, "min_android_ver"] <- new_play_store_temp
+
+
+new_play_store <-  new_play_store %>%
+  separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
+
+
+
+```
 
 ## **3.Results : EDA**
 
@@ -506,7 +523,7 @@ clean_app_store %>%
 ```
 
 
-#### 6. Number of applications per category
+#### 6. Applications per category
  Shows the number of apps in each category. We can see that family has the greatest percentage of apps. 
 ```{r }
 
@@ -527,6 +544,7 @@ clean_app_store %>%
 
 
 #### 7. Average rating of apps
+Average rating of apps in each category does not vary significantly. 
 ```{r avg_rating_plot, message=FALSE, warning=FALSE}
 
 
@@ -561,17 +579,32 @@ clean_app_store %>%
 
 
 
-#### 8. Performance of apps based on category
-```{r}
+#### 8. Size and rating 
+We can see that apps with the their sizes under 30 MB, constitute the majority with a good rating(4)
+```{r }
 
 
+p <- clean_app_store %>% 
+  ggplot(aes(x = size_mb, y = rating)) + 
+  geom_point() 
 
-
-
+  ggMarginal(p, type="histogram")
 
 ```
 
 
+#### 8. Size and number of installs 
+Apps with sizes between 5MB and 30MB gets the most number of installs. 
+```{r }
+
+p2 <- clean_app_store %>% 
+  filter(!is.na(size_mb) ) %>% 
+  ggplot(aes(x = size_mb, y = log(installs + 0.005))) + 
+  geom_point() 
+
+  ggMarginal(p2, type="histogram")
+
+```
 
 
 
