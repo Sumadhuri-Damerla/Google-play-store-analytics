@@ -45,6 +45,8 @@ theme_set(theme_minimal())
 Research has shown that specific concepts and phenomenon are associated with specific colors e.g money is most often associated with green color, oceans with blue and love with red. When colors are associated with the concepts that evoke them, this is called “semantically resonant color choices.” This concept is remarkably important for data visualization, and its effective communication. For this purpose, we created a custom color pallet, containing colors that are associated with the concepts of our dataset. This also help us be consistent with our choices of colors. 
 Keeping in view accessibility, we have used colors that are color blind friendly. 
 ```{r }
+# reference: 
+
 custom_colors <- c(
   `red`             = "#d11141",
   `blueish green`   = "#009E73",
@@ -54,7 +56,7 @@ custom_colors <- c(
   `vermillion`      = "#D55E00",
   `yellow`          = "#009E73",
   `grey`            = "#999999",
-  `reddidh purple`  = "#CC79A7"
+  `reddish purple`  = "#CC79A7"
   )
 
 custom_cols <- function(...) {
@@ -285,38 +287,38 @@ diff
 #### current version column ####
   
 # write.xlsx(clean_app_store, "mydata.xlsx")
-  
-# # convert into numeric 
-#   clean_app_store$current_ver <- as.numeric(clean_app_store$current_ver)
 #   
-  
-  ver_dev_rows <- grep("Varies with device", clean_app_store$android_ver)
-  clean_app_store_temp <- clean_app_store$android_ver[ver_dev_rows]
-  
-  # Fill with "Varies with device"
-  clean_app_store[ver_dev_rows, "min_android_ver"] <- clean_app_store_temp
-  #clean_app_store <-  clean_app_store %>% 
-   # separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
-  
-
-
-#  write.xlsx(clean_app_store, "mydata.xlsx")
-  
-  
-#### android_ver column 
-
-
-ver_dev_rows <- grep("Varies with device", new_play_store$android_ver)
-
-new_play_store_temp <- new_play_store$android_ver[ver_dev_rows]
-
-
-# Fill with "Varies with device"
-new_play_store[ver_dev_rows, "min_android_ver"] <- new_play_store_temp
-
-
-new_play_store <-  new_play_store %>%
-  separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
+# # # convert into numeric 
+# #   clean_app_store$current_ver <- as.numeric(clean_app_store$current_ver)
+# #   
+#   
+#   ver_dev_rows <- grep("Varies with device", clean_app_store$android_ver)
+#   clean_app_store_temp <- clean_app_store$android_ver[ver_dev_rows]
+#   
+#   # Fill with "Varies with device"
+#   clean_app_store[ver_dev_rows, "min_android_ver"] <- clean_app_store_temp
+#   #clean_app_store <-  clean_app_store %>% 
+#    # separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
+#   
+# 
+# 
+# #  write.xlsx(clean_app_store, "mydata.xlsx")
+#   
+#   
+# #### android_ver column 
+# 
+# 
+# ver_dev_rows <- grep("Varies with device", new_play_store$android_ver)
+# 
+# new_play_store_temp <- new_play_store$android_ver[ver_dev_rows]
+# 
+# 
+# # Fill with "Varies with device"
+# new_play_store[ver_dev_rows, "min_android_ver"] <- new_play_store_temp
+# 
+# 
+# new_play_store <-  new_play_store %>%
+#   separate(android_ver, c("min_android_ver", "max_android_ver"), sep = "\\s", )
 
 
 
@@ -370,15 +372,40 @@ Pairplot!
 
 ### 3.Univariate plots
 #### 1.Category
+ Shows the number of apps in each category. We can see that family has the greatest percentage of apps. 
 ```{r category_plot,echo= FALSE,message=FALSE, warning=FALSE}
+
+# Total number of categories
+length(unique(clean_app_store$category))
+
+# reorder(category, category, function(category) length(category))
+
 # bar plot for category
 clean_app_store %>%
-  ggplot(aes(x = category, fill = category)) +
+  ggplot(aes(x = reorder(category, category, function(category) -length(category)) , fill = custom_cols("orange"))) +
   geom_bar(width = 0.5) +
-  coord_flip() +
-  ggtitle("Distribution of Categories") +
-  theme(legend.position = "None") + 
-  scale_fill(palette = "mixed", guide = "none")
+#  coord_flip() +
+  ggtitle("Number of Apps in each Categories") +
+  labs(y="Count", x = "Category") +
+  theme(legend.position = "None",
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90)
+        )
+
+# Number of apps in category
+clean_app_store %>% 
+  group_by(category)  %>% 
+  summarise(count_of_apps = length(app)) %>% 
+  arrange(-count_of_apps) %>% 
+  mutate(perc_category = (count_of_apps / sum(count_of_apps) * 100 )) %>%
+  ggplot(aes(x= reorder(category, -perc_category) , y = perc_category, fill = custom_cols("orange"))) +
+  geom_bar(stat = "identity") +
+  ggtitle("Number of Apps in each Categories") +
+  labs(y="Count", x = "Category") +
+  theme(legend.position = "None",
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90)
+        )
   
 
 ```
@@ -387,11 +414,15 @@ We can observe that the family category has the most number of apps followed by 
 
 #### 2.Price
 ```{r price_plot,echo= FALSE, message=FALSE, warning=FALSE}
+
 clean_app_store %>%
-  ggplot(aes(x = price))+
-  geom_histogram(fill = 'red', binwidth = 3) +
+  ggplot(aes(x = price)) +
+  geom_histogram(fill = custom_cols("blueish green"), binwidth = 3) +
   scale_y_log10() +
-  ggtitle('Distribution of Price')
+  ggtitle('Distribution of Price') + 
+  labs(y="Count", x = "Price") +
+  theme(plot.title = element_text(hjust = 0.5))
+
 ```
 
 Most of the apps are affordable and we can observe one outlier at 400 dollar range.
@@ -399,23 +430,37 @@ Most of the apps are affordable and we can observe one outlier at 400 dollar ran
 #### 3.Pie chart of type
 ```{r type_plot,message=FALSE, warning=FALSE}
 clean_app_store %>%
-  ggplot(aes(x=factor(1), fill=types))+
-  geom_bar(width = 1)+
-  coord_polar("y")
+  ggplot(aes(x=factor(1), fill=types)) +
+  geom_bar(width = 1) +
+  coord_polar("y") +
+  ggtitle('Free and Paid App Distribution') +
+  labs(y="", x = "") +
+  theme(plot.title = element_text(hjust = 0.5))
+  scale_fill(palette = "mixed") 
+  
+
 ```
 
 We can see that most of the apps are free.
 
 #### 4.Reviews
 ```{r reviews_plot,echo= FALSE, message=FALSE, warning=FALSE}
-
 #Histogram
 clean_app_store %>%
   ggplot(aes(x = reviews))+
-  geom_histogram(fill = 'red')+
-  scale_x_log10()+
-  geom_vline(xintercept = median(clean_app_store$reviews), color = 'blue')+
-  ggtitle('Reviews')
+  geom_histogram(fill = custom_cols("red"))+
+  scale_x_log10(labels = comma)+
+  geom_vline(xintercept = median(clean_app_store$reviews), color = custom_cols("sky blue"))+
+  ggtitle('Reviews') +
+  labs(y="Count", x = "Review") +
+   theme(plot.title = element_text(hjust = 0.5), 
+         axis.text.x = element_text(vjust=0.5),
+        legend.position = "None")
+
+
+
+
+
 ```
 
 ```{r}
@@ -429,10 +474,15 @@ have more than 2747 reviews.(red line is the median)
 ```{r rating_plot,echo= FALSE, message=FALSE, warning=FALSE}
 #Histogram
 clean_app_store %>%
-  ggplot(aes(x = rating))+
-  geom_histogram(fill = 'red')+
-  scale_x_log10()+
-  ggtitle('Rating')
+  ggplot(aes(x = rating)) +
+  geom_histogram(fill = custom_cols("vermillion")) +
+  ggtitle('App rating') +
+  labs(y="Count", x = "Rating") +
+   theme(plot.title = element_text(hjust = 0.5), 
+         axis.text.x = element_text(vjust=0.5),
+        legend.position = "None")
+
+
 ```
 
 We can observe that there are very few apps with low ratings and most ratings are between 3-5
@@ -446,6 +496,7 @@ library(scales)
 
 ggplot(data = clean_app_store) +
   geom_point(mapping = aes(x = rating, y = reviews, col = types)) +
+  scale_color(discrete = TRUE, palette = "hot") +
   scale_y_continuous(trans='log10', labels=comma) +
   labs(title = "Android App Ratings vs Number of Reviews", subtitle = "Google Playstore Dataset", x = "Rating from 1 to 5 stars", y = "Number of Reviews") +
   theme_linedraw()
@@ -453,7 +504,7 @@ ggplot(data = clean_app_store) +
 ```
 
 
-We can observe that the no.of reviews influence the ratings. Generally, as the number of reviews increase, the rating is higher.
+We can observe that the number of reviews influence the ratings. Generally, as the number of reviews increase, the rating is higher.
 
 
 Let's explore other factors that potentially influence rating
@@ -463,6 +514,11 @@ Let's explore other factors that potentially influence rating
 
 ggplot(clean_app_store, aes(x = rating,y = category,na.rm = TRUE)) + 
   geom_point(aes(color = 'red')) + 
+  ggtitle("App rating vs category") +
+  labs(y="Category", x = "Rating") +
+  theme(plot.title = element_text(hjust = 0.5), 
+         axis.text.x = element_text(vjust=0.5),
+        legend.position = "None") +
   facet_wrap(.~types, drop = TRUE)
 
 ```
@@ -478,12 +534,32 @@ clean_app_store%>%
   ) %>%
   arrange(-totalInstalls) %>%
   head(10) %>%
-  ggplot(aes(x = category, y = totalInstalls, fill = category)) +
-  geom_bar(stat="identity") +
-  labs(title= "Top10 Installed Categories" ) +
-  theme(axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+  ggplot(aes(x = reorder(category, -totalInstalls), y = totalInstalls, fill = custom_cols("red")) ) +
+  geom_bar(fill = custom_cols("blueish green"), stat="identity") +
+  ggtitle("Top 10 Installed Categories") +
+  labs(y="Number of Installs", x = "Category") +
+  scale_y_continuous(labels = comma) +
+  theme(plot.title = element_text(hjust = 0.5), 
+         axis.text.x = element_text(angle=90, vjust=0.5),
+        legend.position = "None") 
 
+   
+#   
+# clean_app_store%>%
+#   count(category, installs, types) %>%
+#   group_by(category, types) %>%
+#   summarize(
+#     totalInstalls = sum(as.numeric(installs))
+#   ) %>%
+#   arrange(-totalInstalls) %>%
+#   head(10) %>%
+#   ggplot(aes(x = reorder(category, -totalInstalls), y = totalInstalls, fill = types)) +
+#   geom_bar(stat="identity") +
+#   scale_fill(palette = "main") +
+#   theme(axis.text.x = element_text(angle = 90))
+#   labs(title= "Top 10 Installed Categories") 
+  
+  
 ```
 
 
@@ -498,11 +574,29 @@ clean_app_store%>%
   ) %>%
   arrange(-totalInstalls) %>%
   tail(10) %>%
-  ggplot(aes(x = category, y = totalInstalls, fill = category)) +
-  geom_bar(stat="identity") +
-  labs(title= "Least 10 Installed Categories" ) +
-  theme(axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+  ggplot(aes(x = reorder(category, totalInstalls), y = totalInstalls, fill = custom_cols("red"))) +
+  geom_bar(fill = custom_cols("red"), stat="identity") +
+  ggtitle("Least 10 Installed Categories") +
+  labs(y="Number Of Installs", x = "Category") +
+  scale_y_continuous(labels = comma) +
+  theme(plot.title = element_text(hjust = 0.5), 
+         axis.text.x = element_text(angle=90, vjust=0.5),
+        legend.position = "None") 
+
+# 
+# clean_app_store%>%
+#   count(category, installs, types) %>%
+#   group_by(category, types) %>%
+#   summarize(
+#     totalInstalls = sum(as.numeric(installs))
+#   ) %>%
+#   arrange(-totalInstalls) %>%
+#   tail(10) %>%
+#   ggplot(aes(x = reorder(category, totalInstalls), y = totalInstalls, fill = types)) +
+#   geom_bar(stat="identity") +
+#   scale_fill(palette = "main") +
+#   theme(axis.text.x = element_text(angle = 90)) +
+#   labs(title= "Least 10 Installed Categories" ) 
 
 ```
 
@@ -515,32 +609,19 @@ clean_app_store %>%
   summarize(totalInstalls = sum(installs)) %>%
   arrange(desc(totalInstalls)) %>%
   head(10) %>%
-  ggplot(aes(x = category, y = totalInstalls, fill = 'red')) +
-  geom_bar(stat="identity", width=.5) +
-  labs(title= "Top 10 Paid Categories" ) +
-  theme(axis.text.x = element_text(angle=65, vjust=0.5),legend.position = "None")
+  ggplot(aes(x = reorder(category, -totalInstalls) , y = totalInstalls)) +
+  geom_bar( fill = custom_cols("blueish green"), stat="identity", width=.5) +
+  ggtitle("Top 10 Paid Categories") +
+  labs(y="Number Of Installs", x = "Category") +
+   scale_y_continuous(labels = comma) +
+  theme(plot.title = element_text(hjust = 0.5), 
+         axis.text.x = element_text(angle=65, vjust=0.5),
+        legend.position = "None") 
+
+
 
 ```
 
-
-#### 6. Applications per category
- Shows the number of apps in each category. We can see that family has the greatest percentage of apps. 
-```{r }
-
-# Total number of categories
-length(unique(clean_app_store$category))
-
-# Number of apps in category
-clean_app_store %>% 
-  group_by(category)  %>% 
-  summarise(count_of_apps = length(app)) %>% 
-  arrange(-count_of_apps) %>% 
-  mutate(perc_category = (count_of_apps / sum(count_of_apps) * 100 )) %>%
-  ggplot(aes(x= reorder(category, -perc_category) , y = perc_category)) +
-  geom_bar(stat = "identity") + 
-  theme(axis.text.x = element_text(angle = 90))
-
-```
 
 
 #### 7. Average rating of apps
@@ -548,21 +629,29 @@ Average rating of apps in each category does not vary significantly.
 ```{r avg_rating_plot, message=FALSE, warning=FALSE}
 
 
-# Distribution of rating of all the categories
+# Distribution Of Rating For All Categories
 base <- ggplot(clean_app_store, aes(x = clean_app_store$rating))
 base + 
-  geom_bar(na.rm = TRUE) + 
+  geom_bar(fill = custom_cols("blueish green"), na.rm = TRUE) + 
   facet_wrap(~clean_app_store$category,  ncol = 4,  shrink = TRUE) +
-  theme(
-    strip.text.x = element_text(margin = margin(2, 2, 2, 2))
-  )
+  ggtitle("Distribution of rating of all the categories") +
+  labs(y="Count", x = "Rating") +
+  theme(strip.text.x = element_text(margin = margin(2, 2, 2, 2)),
+        plot.title = element_text(hjust = 0.5)
+        )
 
-# Distribution of rating for 8 categories with the highest numbers of apps
+
+# Distribution of rating for 8 categories with the largest numbers of apps
 clean_app_store %>% 
  filter( category == c("FAMILY", "GAME", "TOOLS","MEDICAL", " BUSINESS", "PRODUCTIVITY", "FINANCE", "COMMUNICATION", "SPORTS")) %>% 
   ggplot(aes(x = rating)) +
-  geom_bar(na.rm = TRUE) + 
-  facet_wrap(~category,  ncol = 4, nrow = 4,  shrink = TRUE)
+  geom_bar(fill = custom_cols("blueish green"), na.rm = TRUE) + 
+  facet_wrap(~category,  ncol = 4, nrow = 4,  shrink = TRUE) +
+  ggtitle("Distribution of rating for 8 categories \n with the highest numbers of apps") +
+  labs(y="Count", x = "Rating") +
+  theme(
+        plot.title = element_text(hjust = 0.5)
+        )
 
 
 # Average rating per category
@@ -570,10 +659,14 @@ clean_app_store %>%
   select(c("category", "rating")) %>% 
   group_by(category) %>% 
   summarise(rating = mean(rating, na.rm = TRUE)) %>% 
-  ggplot(aes(category, rating)) + 
+  ggplot(aes(x = reorder(category, - rating) , rating, fill = custom_cols("orange"))) + 
   geom_col() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  scale_fill(palette = "mixed", guide = "none")
+  ggtitle("Average Rating Per Category") +
+  labs(y="Category", x = "Rating") +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5)
+        )
 
 ```
 
@@ -585,10 +678,14 @@ We can see that apps with the their sizes under 30 MB, constitute the majority w
 
 
 p <- clean_app_store %>% 
-  ggplot(aes(x = size_mb, y = rating)) + 
-  geom_point() 
+  ggplot(aes(x = size_mb, y = rating, na.rm =TRUE)) + 
+  geom_point(color = custom_cols("blueish green"),na.rm =TRUE) +
+  ggtitle("Size Vs Rating") +
+  labs(y="Ratung", x = "Size (MB)") +
+  theme(plot.title = element_text(hjust = 0.5))
 
-  ggMarginal(p, type="histogram")
+
+ ggMarginal(p, type="histogram", fill = custom_cols("blueish green"), alpha = .6)
 
 ```
 
@@ -599,10 +696,13 @@ Apps with sizes between 5MB and 30MB gets the most number of installs.
 
 p2 <- clean_app_store %>% 
   filter(!is.na(size_mb) ) %>% 
-  ggplot(aes(x = size_mb, y = log(installs + 0.005))) + 
-  geom_point() 
+  ggplot(aes(x = size_mb, y = log(installs + 0.005), na.rm =TRUE)) + 
+  geom_point(color = custom_cols("vermillion"), na.rm =TRUE) + 
+  ggtitle("Size Vs Number of Installs ") +
+  labs(y="No. of Installs (Log)", x = "Size (MB)") +
+  theme(plot.title = element_text(hjust = 0.5))
 
-  ggMarginal(p2, type="histogram")
+  ggMarginal(p2, type="histogram", fill = custom_cols("vermillion"), alpha = .6)
 
 ```
 
