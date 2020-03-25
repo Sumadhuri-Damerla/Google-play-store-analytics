@@ -192,7 +192,7 @@ Cleaning data includes the following:
 2. Removing observations with NaN rating which have reviews  
 3. Modify datatype of "reviews" columns to numeric  
 4. Convert all the app sizes to mb and modify it's datatype to numeric    
-5. Remove unwanted characters in "installs" column and modufy it's datatype to numeric  
+5. Remove unwanted characters in "installs" column and modify it's datatype to numeric  
 6. Remove dollar sign in "price" column and modify it's datatype to numeric  
 7. Seperate content rating column  
 8. Modify the datatype of "last_update" column to date  
