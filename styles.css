@@ -1,6 +1,3 @@
-body, h1, h2, h3, h4 {
-    font-family: "Bookman", serif;
-}
 
 body {
     color: #333333;
@@ -11,5 +8,3 @@ a, a:hover {
 pre {
     font-size: 10px;
 }
-
-
