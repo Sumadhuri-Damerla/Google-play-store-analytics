@@ -160,6 +160,8 @@ colnames(play_store) <- c("app", "category", "rating", "reviews", "size_mb", "in
 
 ```{r message=FALSE, warning=FALSE}
 
+length(unique(play_store$app)) #number of unique apps in dataset
+
 ```
 
 The number of rows in the dataset equals 10841 but the application names column has only 9660 unique values, ie there are applications with the same name. The following graph prompts us to ask the following questions:
