@@ -473,7 +473,7 @@ clean_play_store %>%
   coord_polar(theta = "y", start = 0) +
   labs(title = "Pie chart",
        subtitle = "Free and Paid App Distribution",
-       y = "App count",
+       y = "App Count",
        x = "Factor(1)",
        caption = "Source: google play store dataset",
        fill = "Types") +
@@ -488,11 +488,38 @@ We can see that most of the apps are free.
 
 #### **11.Android version:**  
 
-Remove the "android_version" column and "current_version" column
+Splitting android_ver column into two columns: min_android_ver and max_android_ver. "up" in max_android_ver indicates the app is supported by latest versions of android.  
 ```{r warning=FALSE,message=FALSE}
+#### current version column ####
 
-clean_play_store <- clean_play_store %>% 
-  subset(select = -c(current_ver, android_ver) ) 
+# Indexes of strings with different patterns 
+null_rows <- grep( NaN, clean_play_store$android_ver)
+varies_with_dev_row <- grep("Varies with device", clean_play_store$android_ver)
+with_dash <- grep("-", clean_play_store$android_ver)
+and_up_obs <- grep("and", clean_play_store$android_ver)
+  
+# values with dash 
+and_ver_with_dash_temp <- clean_play_store$android_ver[with_dash] 
+and_ver_with_dash <-  sub(".*\\s", "", temp)
+
+# Seperating COlumn min_android_ver
+clean_play_store <-  clean_play_store %>% 
+  separate(android_ver, c("min_android_ver", "max_android_ver"), convert = TRUE, sep = "\\s")
+    
+# Varies with deviece remived
+clean_play_store$min_android_ver[varies_with_dev_row] <-  NA 
+clean_play_store$max_android_ver[varies_with_dev_row] <-  NA 
+ 
+# up in max_android_ver
+clean_play_store$max_android_ver[and_up_obs] <-  "up"
+
+# NaN in max_android_ver
+clean_play_store$max_android_ver[null_rows] <-  NA
+clean_play_store$min_android_ver[null_rows] <-  NA
+ 
+# "-" values in max_android_ver   
+clean_play_store$max_android_ver[with_dash] <- and_ver_with_dash
+
  
 ```
 
