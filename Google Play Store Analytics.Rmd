@@ -281,7 +281,7 @@ clean_play_store %>%
   geom_density(aes(fill = factor(types)), alpha = 0.5) +
   labs(title = "Density plot",
        subtitle = "App Rating grouped by types",
-       y = "Density",
+       y = "Values",
        x = "Rating",
        caption = "Source: google play store dataset",
        fill = "#Types") +
@@ -353,7 +353,7 @@ clean_play_store %>%
   geom_density(binwidth = 0.1,fill = custom_cols("sky blue"))+
   labs(title = "Density plot",
        subtitle = "Size in MB",
-       y = "Count",
+       y = "Values",
        x = "Size (MB)",
        caption = "Source: google play store dataset") +
    theme(axis.text.x = element_text(vjust=0.5),
@@ -522,6 +522,28 @@ clean_play_store$max_android_ver[with_dash] <- and_ver_with_dash
 
  
 ```
+
+
+#### Number of installs based on support by minimum android version
+```{r android_ver,warning=FALSE,message=FALSE}
+
+clean_play_store %>%
+  ggplot(aes(x = min_android_ver, fill = types )) +
+  geom_bar(width = .5, alpha = 0.7, na.rm = TRUE) +
+  labs(title = "Bar Chart",
+       subtitle = "Installs Based on Min. Android Version",
+       x = "Min. Android Version",
+       y = "Count",
+       caption = "Source: google play store dataset",
+       fill = "Types") +
+ theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10),
+       axis.text.x = element_text(angle = 90)
+                                )
+  
+
+```
+
+
 
 ## **3.Further EDA**
 ### **1.Explore data after data cleaning and transformation** {.tabset .tabset-fade .tabset-pill}
