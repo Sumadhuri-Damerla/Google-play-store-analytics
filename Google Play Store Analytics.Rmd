@@ -198,12 +198,11 @@ length(unique(play_store$category))
 
 ##### Category plot
 ```{r category_plot1,message=FALSE, warning=FALSE}
-
 #Bar plot
  play_store %>%
     ggplot(aes(x = reorder(category, category, function(category) -length(category)) , fill = custom_cols("orange"))) +
     geom_bar(width = 0.5) +
-    labs(title = "Bar plot",
+    labs(title = "Bar Chart",
          subtitle = "Number of Apps in each Categories",
          y = "Count",
          x = "Category",
@@ -236,7 +235,8 @@ Removing data for wrong entered app:"Life Made WI-Fi Touchscreen Photo Frame"
     mutate(perc_category = (count_of_apps / sum(count_of_apps) * 100 )) %>%
     ggplot(aes(x = reorder(category, -perc_category) , y = perc_category, fill = custom_cols("orange"))) +
     geom_bar(width = 0.5, stat = "identity") +
-    labs(title = "Bar plot",
+    geom_text(size = 2,position=position_dodge(width = 1),vjust = -0.5,aes(label = count_of_apps)) +
+    labs(title = "Bar Chart",
          subtitle = "Percentage Apps in each Categories",
          y = "Count",
          x = "Category",
@@ -380,7 +380,7 @@ Remove unwanted characters in "installs" column and modufy it's datatype to nume
 clean_play_store %>%
   ggplot(aes(x = size_mb))+
   geom_bar(binwidth = 0.5,fill = custom_cols("sky blue"))+
-  labs(title = "Barplot",
+  labs(title = "Bar Chart",
        subtitle = "Distribution of installs",
        y = "Count",
        x = "Installs",
@@ -471,7 +471,7 @@ clean_play_store %>%
   ggplot(aes(x = factor(1), fill = types)) +
   geom_bar(width = 1, alpha = 0.7) +
   coord_polar(theta = "y", start = 0) +
-  labs(title = "Pie chart",
+  labs(title = "Pie Chart",
        subtitle = "Free and Paid App Distribution",
        y = "App Count",
        x = "Factor(1)",
@@ -489,7 +489,7 @@ We can see that most of the apps are free.
 #### **11.Android version:**  
 
 Splitting android_ver column into two columns: min_android_ver and max_android_ver. "up" in max_android_ver indicates the app is supported by latest versions of android.  
-```{r warning=FALSE,message=FALSE}
+```{r android_ver,warning=FALSE,message=FALSE}
 #### current version column ####
 
 # Indexes of strings with different patterns 
@@ -500,13 +500,13 @@ and_up_obs <- grep("and", clean_play_store$android_ver)
   
 # values with dash 
 and_ver_with_dash_temp <- clean_play_store$android_ver[with_dash] 
-and_ver_with_dash <-  sub(".*\\s", "", temp)
+and_ver_with_dash <-  sub(".*\\s", "", and_ver_with_dash_temp)
 
-# Seperating COlumn min_android_ver
+# Seperating column min_android_ver
 clean_play_store <-  clean_play_store %>% 
   separate(android_ver, c("min_android_ver", "max_android_ver"), convert = TRUE, sep = "\\s")
     
-# Varies with deviece remived
+# Varies with device remived
 clean_play_store$min_android_ver[varies_with_dev_row] <-  NA 
 clean_play_store$max_android_ver[varies_with_dev_row] <-  NA 
  
@@ -550,10 +550,10 @@ clean_play_store$Reviews <- log(clean_play_store$reviews)
 clean_play_store %>%
   select(rating, Reviews) %>%
   ggpairs(
-          title = "Correlogram of Rating vs Reviews",
           mapping = ggplot2::aes(color = "types")) +
-  theme(plot.title = element_text(hjust = 0.5))
-
+  labs(title = "Correlogram",
+       subtitle = "Rating vs Reviews",
+        caption = "Source: google play store dataset") 
 ```
 
 #### Rating vs Installs
@@ -563,9 +563,10 @@ clean_play_store$Installs <- log(clean_play_store$installs)
 
 clean_play_store %>%
   select(rating, Installs) %>%
-  ggpairs(
-          title = "Correlogram of Rating vs Installs",
-          mapping = ggplot2::aes(color = "types")) 
+  ggpairs(mapping = ggplot2::aes(color = "types")) +
+  labs(title = "Correlogram",
+       subtitle = "Rating vs Installs",
+       caption = "Source: google play store dataset")
 
 ```
 
@@ -576,9 +577,10 @@ clean_play_store$Price <- log(clean_play_store$price)
 
 clean_play_store %>%
   select(rating, Price) %>%
-  ggpairs(
-          title = "Correlogram of Rating vs Price",
-          mapping = ggplot2::aes(color = "types"))
+  ggpairs(mapping = ggplot2::aes(color = "types")) +
+  labs(title = "Correlogram",
+       subtitle = "Rating vs Price",
+       caption = "Source: google play store dataset")
 
 ```
 
@@ -588,9 +590,10 @@ clean_play_store$types <- as.factor(clean_play_store$types)
 
 clean_play_store %>%
   select(rating, types) %>%
-  ggpairs(
-          title = "Correlogram of Rating vs Types",
-          mapping = ggplot2::aes(color = "types"))
+  ggpairs(mapping = ggplot2::aes(color = "types")) +
+  labs(title = "Correlogram",
+       subtitle = "Rating vs Types",
+       caption = "Source: google play store dataset")
 
 ```
 
@@ -652,9 +655,9 @@ clean_play_store%>%
   ) %>%
   arrange(-totalInstalls) %>%
   ggplot(aes(x = reorder(category, totalInstalls), y = log(totalInstalls), fill = types)) +
-  geom_bar(stat="identity") +
+  geom_bar(width = 0.5,stat = "identity") +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Barplot",
+  labs(title = "Bar Chart",
        subtitle = "Number of Installs per Category",
        x = "Category",
        y = "Number of Installs(log)",
@@ -678,7 +681,7 @@ clean_play_store%>%
   head(10) %>%
   ggplot(aes(x = reorder(category, -totalInstalls), y = totalInstalls, fill = custom_cols("red"))) +
   geom_bar(width = 0.5, fill = custom_cols("blueish green"), stat = "identity") +
-  labs(title = "Barplot",
+  labs(title = "Bar Chart",
        subtitle = "Top 10 Installed Categories",
        x = "Category",
        y = "Number of Installs",
@@ -703,7 +706,7 @@ clean_play_store%>%
   tail(10) %>%
   ggplot(aes(x = reorder(category, totalInstalls), y = totalInstalls)) +
   geom_bar(width = 0.5, fill = custom_cols("vermillion"), stat = "identity") +
-  labs(title = "Barplot",
+  labs(title = "Bar Chart",
        subtitle = "10 Least Installed Categories",
        x = "Category",
        y = "Number of Installs",
@@ -727,7 +730,7 @@ clean_play_store %>%
   head(10) %>%
   ggplot(aes(x = reorder(category, -totalInstalls) , y = totalInstalls)) +
   geom_bar( fill = custom_cols("blueish green"), stat = "identity", width = 0.5) +
-  labs(title = "Barplot",
+  labs(title = "Bar Chart",
        subtitle = "Top 10 Paid Categories",
        x = "Category",
        y = "Number of Installs",
@@ -769,7 +772,7 @@ clean_play_store %>%
   ggplot(aes(x = reorder(category, - rating) , rating)) + 
   geom_col(width = 0.5, fill = custom_cols("sky blue")) +
   ggtitle("Average Rating Per Category") +
-  labs(title = "Barplot",
+  labs(title = "Bar Chart",
        subtitle = "Average Rating Per Category",
        y = "Rating", 
        x = "Category",
@@ -787,7 +790,7 @@ clean_play_store %>%
 plot <- clean_play_store %>% 
   ggplot(aes(x = size_mb, y = rating, na.rm = TRUE)) + 
   geom_point(color = custom_cols("blueish green"),na.rm = TRUE) +
-  labs(title = "Marginalplot",
+  labs(title = "Marginal Plot",
        subtitle = "Size Vs Rating",
        y = "Rating", 
        x = "Size (MB)",
@@ -807,7 +810,7 @@ plot <- clean_play_store %>%
   filter(!is.na(size_mb) ) %>% 
   ggplot(aes(x = size_mb, y = log(installs + 0.005), na.rm = TRUE)) + 
   geom_point(color = custom_cols("vermillion"), na.rm = TRUE) + 
-  labs(title = "Marginalplot",
+  labs(title = "Marginal Plot",
        subtitle = "Size Vs Number of Installs",
        y = "No. of Installs (Log)", 
        x = "Size (MB)",
