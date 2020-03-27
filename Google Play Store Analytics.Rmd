@@ -13,13 +13,17 @@ output:
     df_print: paged
     css: styles.css
 ---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+                      echo=FALSE, warning=FALSE, message=FALSE)
+```
 
 ## **Introduction**
 The **google play store analytics** [dataset](https://www.kaggle.com/lava18/google-play-store-apps) offers insights into different apps, their ratings, user-reviews, installs and many other. In this report,we explore the dataset to find relations between columns...
 
 ## **1.Setup**
 ### **1. Loading necessary packages**
-```{r loading_libraries,message=FALSE, warning=FALSE}
+```{r loading_libraries}
 
 library(tidyverse)
 library(dplyr)
@@ -34,7 +38,7 @@ theme_set(theme_light())
 
 Research has shown that specific concepts and phenomenon are associated with specific colors e.g money is most often associated with green color, oceans with blue and love with red. When colors are associated with the concepts that evoke them, this is called “semantically resonant color choices.” This concept is remarkably important for data visualization, and its effective communication. For this purpose, we created a custom color pallet, containing colors that are associated with the concepts of our dataset. This also help us be consistent with our choices of colors. 
 Keeping in view accessibility, we have used colors that are color blind friendly. 
-```{r }
+```{r custom_color_pallete}
 # reference: https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2
 
 custom_colors <- c(
@@ -102,7 +106,7 @@ scale_fill <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) 
 
 
 ### **3. Loading Data**
-```{r loading_data,message = FALSE, warning = FALSE}
+```{r loading_data}
 
 play_store <- read_csv("data/googleplaystore.csv")
 
@@ -113,14 +117,14 @@ The loaded play store data contains 10841 rows.
 ### **1.View the dataset** {.tabset .tabset-fade .tabset-pills}
 
 #### Sneak peak at the data
-```{r message=FALSE, warning=FALSE}
+```{r}
 
 head(play_store)
 
 ```
 
 #### No. of rows
-```{r message=FALSE, warning=FALSE}
+```{r}
 
 dim(play_store)
 
@@ -129,7 +133,7 @@ The dataset contains `r dim(play_store) [1] ` rows and `r dim(play_store) [2] ` 
 
 
 #### Summary of data
-```{r message=FALSE, warning=FALSE}
+```{r}
 
 summary(play_store)
 
@@ -139,7 +143,7 @@ summary(play_store)
 2. Rating can only be NaN or null if the number of reviews are 0. Observations with NaN rating and number of reviews greater than zero does not represent correct data. As the number of these observations is less as compared to the whole dataset, we decided to remove them. 
 
 #### Structure of data
-```{r message=FALSE, warning=FALSE}
+```{r}
 
 str(play_store)
 
@@ -148,7 +152,7 @@ As can be seen from the table, the data contains missing values, duplicates and 
 
 ### **2.Exploring and Tidying Data**
 As seen in above section, column names in the dataset are not in accordance with the good practices and conventions of R, and were replaced with names that are in accordance with the naming conventions in R. 
-```{r tidydata, message=FALSE, warning=FALSE}
+```{r tidydata}
 
 # changing column names to remove spaces and other special characters and to maintain consistency
 colnames(play_store) <- c("app", "category", "rating", "reviews", "size_mb", "installs", "types", "price", "content_rating", "genres", "last_update", "current_ver", "android_ver")
@@ -158,7 +162,7 @@ colnames(play_store) <- c("app", "category", "rating", "reviews", "size_mb", "in
 
 #### **1.App column:**
 
-```{r message=FALSE, warning=FALSE}
+```{r app_col}
 
 length(unique(play_store$app)) #number of unique apps in dataset
 
@@ -175,7 +179,7 @@ The number of rows in the dataset equals 10841 but the application names column 
  4.The dataset is published on Kaggle in 5 different versions, with a duration of one month between the first and the last version. It could therefore evolve during this period.  
 
 ##### Removing the duplicate values
-```{r Removing duplicate values,message=FALSE, warning=FALSE}
+```{r Removing duplicate values}
 
 #  Observations: Dataset include two different observations for the same app, with different reviews (number of reviews), we kept the lesser number, so not to create overly optimistic results
 # another option is to take mean of the duplicate values and use it instead
@@ -189,7 +193,8 @@ clean_play_store <- arranged_data_set[dpl_value,]
 
 
 #### **2.Category:**
-```{r}
+Number of unique apps:
+```{r category_col}
 
 # Total number of categories
 length(unique(play_store$category))
@@ -197,7 +202,7 @@ length(unique(play_store$category))
 ```
 
 ##### Category plot
-```{r category_plot1,message=FALSE, warning=FALSE}
+```{r category_plot1}
 #Bar plot
  play_store %>%
     ggplot(aes(x = reorder(category, category, function(category) -length(category)) , fill = custom_cols("orange"))) +
@@ -217,7 +222,7 @@ length(unique(play_store$category))
 
 
 Removing data for wrong entered app:"Life Made WI-Fi Touchscreen Photo Frame" 
-```{r clean_data,warning=FALSE,message=FALSE}
+```{r remove_wrongdata}
 
 #### Removing wrong app-data ####
 # Data for app "Life Made WI-Fi Touchscreen Photo Frame" removed (wrong rating, reviews, size e.t.c)
@@ -226,7 +231,7 @@ Removing data for wrong entered app:"Life Made WI-Fi Touchscreen Photo Frame"
 ```
 
 ##### Percentage category plot after cleaning the column
-```{r category_plot2,message=FALSE, warning=FALSE}
+```{r category_plot2}
 
   clean_play_store %>% 
     group_by(category)  %>% 
@@ -235,10 +240,10 @@ Removing data for wrong entered app:"Life Made WI-Fi Touchscreen Photo Frame"
     mutate(perc_category = (count_of_apps / sum(count_of_apps) * 100 )) %>%
     ggplot(aes(x = reorder(category, -perc_category) , y = perc_category, fill = custom_cols("orange"))) +
     geom_bar(width = 0.5, stat = "identity") +
-    geom_text(size = 2,position=position_dodge(width = 1),vjust = -0.5,aes(label = count_of_apps)) +
+    geom_text(size = 2,position=position_dodge(width = 1),vjust = -0.3,aes(label = round(perc_category,2))) +
     labs(title = "Bar Chart",
          subtitle = "Percentage Apps in each Categories",
-         y = "Count",
+         y = "Percentage",
          x = "Category",
          caption = "Source: google play store dataset") +
     theme(legend.position = "None",
@@ -250,7 +255,7 @@ Removing data for wrong entered app:"Life Made WI-Fi Touchscreen Photo Frame"
 #### **3.Rating:**
 
 Table included missing values as shown below  
-```{r detect_missing_data,message=FALSE, warning=FALSE}
+```{r detect_missing_data}
 
 # Detect null cols and null rate
 table(is.na(play_store))
@@ -262,7 +267,7 @@ Missing rates are very low. We choose to delete them
 
 
 Removing observations with NaN rating which have reviews  
-```{r remove_missing_data,warning=FALSE,message=FALSE}
+```{r remove_missing_data}
 
 #### removing observations with reviews but NaN rating ####
  diff <- count(subset(new_play_store)) - count(subset(clean_play_store, !(is.na(clean_play_store$rating) & !clean_play_store$reviews == "0" )))
@@ -273,7 +278,7 @@ Removing observations with NaN rating which have reviews
 
 
 ##### Rating plot
-```{r rating_plot, message=FALSE, warning=FALSE}
+```{r rating_plot}
 
 #Density plot
 clean_play_store %>%
@@ -293,7 +298,7 @@ We can observe that there are very few apps with low ratings and most ratings ar
 
 #### **4.Review :** 
 We modify datatype of "reviews" column to numeric  
-```{r warning=FALSE,message=FALSE}
+```{r review_col}
 
 #### converting reviews to numeric ####
   clean_play_store$reviews <- as.numeric(clean_play_store$reviews)
@@ -302,7 +307,7 @@ We modify datatype of "reviews" column to numeric
 
 
 ##### Review distribution plot
-```{r reviews_plot, message=FALSE, warning=FALSE}
+```{r reviews_plot}
 
 clean_play_store %>%
   ggplot(aes(x = reviews))+
@@ -319,7 +324,7 @@ clean_play_store %>%
  
 ```
 
-```{r}
+```{r summary}
 
 #summary
 summary(clean_play_store$reviews)
@@ -332,7 +337,7 @@ have more than 2747 reviews.(red line is the median)
 #### **5.Size:**
 
 Convert all the app sizes to mb and modify it's datatype to numeric 
-```{r warning=FALSE,message=FALSE}
+```{r size_col}
 
 #### Convert all app sizes to MB ####
   # changing all app sizes to MB
@@ -346,14 +351,14 @@ Convert all the app sizes to mb and modify it's datatype to numeric
 
 ```
 
-```{r size_plot, message=FALSE, warning=FALSE}
+```{r size_plot}
 
 clean_play_store %>%
   ggplot(aes(x = size_mb))+
-  geom_density(binwidth = 0.1,fill = custom_cols("sky blue"))+
+  geom_density(binwidth = 0.5,fill = custom_cols("vermillion"))+
   labs(title = "Density plot",
        subtitle = "Size in MB",
-       y = "Values",
+       y = "Density",
        x = "Size (MB)",
        caption = "Source: google play store dataset") +
    theme(axis.text.x = element_text(vjust=0.5),
@@ -364,7 +369,7 @@ clean_play_store %>%
 #### **6.Installs:**
 
 Remove unwanted characters in "installs" column and modufy it's datatype to numeric  
-```{r warning=FALSE,message=FALSE}
+```{r installs_col}
 
 #### install column: remove "+", "," and convert into numeric ####
   # removing "+", ","
@@ -375,11 +380,11 @@ Remove unwanted characters in "installs" column and modufy it's datatype to nume
 
 ```
 
-```{r installs_plot, message=FALSE, warning=FALSE}
+```{r installs_plot}
 
 clean_play_store %>%
-  ggplot(aes(x = size_mb))+
-  geom_bar(binwidth = 0.5,fill = custom_cols("sky blue"))+
+  ggplot(aes(x = installs))+
+  geom_density(fill = custom_cols("sky blue"))+
   labs(title = "Bar Chart",
        subtitle = "Distribution of installs",
        y = "Count",
@@ -393,7 +398,7 @@ clean_play_store %>%
 #### **7.Price:**
 
 We already know that paid apps only account for 7.46% of our dataset. Therefore, we will only look at the prices of paid applications. To do this, we will eliminate the dollar symbol and convert prices into numerical values.
-```{r warning=FALSE,message=FALSE}
+```{r price_col}
 
 ####  price column: remove '$' and convert into numeric ####
   # removing "$"
@@ -405,7 +410,7 @@ We already know that paid apps only account for 7.46% of our dataset. Therefore,
 ```
 
 ##### Price plot
-```{r price_plot, message=FALSE, warning=FALSE}
+```{r price_plot}
 
 clean_play_store %>%
   ggplot(aes(x = price)) +
@@ -425,7 +430,7 @@ Most of the apps are affordable and we can observe one outlier at 400 dollar ran
 #### **8.Content rating:**
 
 Seperate content rating column  
-```{r warning=FALSE,message=FALSE}
+```{r content_col}
 
 #### seperate content rating column ####
   clean_play_store$content_rating <- gsub( '\\+', '', clean_play_store$content_rating )
@@ -438,7 +443,7 @@ Seperate content rating column
 #### **9.Last update:**  
 
 Modify the datatype of "last_update" column to date 
-```{r warning=FALSE,message=FALSE}
+```{r last_update_col}
 
 #### Convert last_update column into date ####
    clean_play_store$last_update <- as.Date(clean_play_store$last_update, format = "%d-%b-%y")
@@ -446,7 +451,7 @@ Modify the datatype of "last_update" column to date
 ```
 
 #### **10.Types:**
-```{r warning=FALSE,message=FALSE}
+```{r types_col}
 
 summary(play_store$types)
 
@@ -457,7 +462,7 @@ play_store[play_store$types == 'NaN',]
 As shown, price of this app is equal to 0 which means the App is Free
 change the value of Type to Free
 
-```{r warning=FALSE,message=FALSE}
+```{r types_tidy}
 
 #### Removing NAN in type column  
    clean_play_store$types <-  gsub(NaN, 'Free', clean_play_store$types) 
@@ -465,7 +470,7 @@ change the value of Type to Free
 ```
 
 ##### Pie plot of type
-```{r type_plot,message=FALSE, warning=FALSE}
+```{r type_plot}
 
 clean_play_store %>%
   ggplot(aes(x = factor(1), fill = types)) +
@@ -489,7 +494,7 @@ We can see that most of the apps are free.
 #### **11.Android version:**  
 
 Splitting android_ver column into two columns: min_android_ver and max_android_ver. "up" in max_android_ver indicates the app is supported by latest versions of android.  
-```{r android_ver,warning=FALSE,message=FALSE}
+```{r android_ver_col}
 #### current version column ####
 
 # Indexes of strings with different patterns 
@@ -548,14 +553,14 @@ clean_play_store %>%
 ## **3.Further EDA**
 ### **1.Explore data after data cleaning and transformation** {.tabset .tabset-fade .tabset-pill}
 #### A look at the structure of data
-```{r view_clean_data,message=FALSE, warning=FALSE}
+```{r view_clean_data}
 
 str(clean_play_store)
 
 ``` 
 
 #### A look at the summary of clean data
-```{r}
+```{r summary_clean_data}
 
 summary(clean_play_store)
 
@@ -565,7 +570,7 @@ Rating ranges from 1 to 5 and the mean is pretty high.
 ### **2.Pair plot** {.tabset .tabset-fade .tabset-pills}
 
 #### Rating vs Reviews
-````{r pairplot1,message=FALSE, warning=FALSE}
+````{r pairplot1}
 
 clean_play_store$Reviews <- log(clean_play_store$reviews)
 
@@ -578,8 +583,20 @@ clean_play_store %>%
         caption = "Source: google play store dataset") 
 ```
 
+#### Rating vs Reviews
+````{r pairplot6}
+
+clean_play_store %>%
+  select(rating, size_mb) %>%
+  ggpairs(
+          mapping = ggplot2::aes(color = "types")) +
+  labs(title = "Correlogram",
+       subtitle = "Rating vs Size (MB)",
+        caption = "Source: google play store dataset") 
+```
+
 #### Rating vs Installs
-````{r pairplot2,message=FALSE, warning=FALSE}
+````{r pairplot2}
 
 clean_play_store$Installs <- log(clean_play_store$installs)
 
@@ -593,7 +610,7 @@ clean_play_store %>%
 ```
 
 #### Rating vs Price
-````{r pairplot3,message=FALSE, warning=FALSE}
+````{r pairplot3}
 
 clean_play_store$Price <- log(clean_play_store$price)
 
@@ -607,7 +624,7 @@ clean_play_store %>%
 ```
 
 #### Rating vs Types  
-````{r pairplot4,message=FALSE, warning=FALSE}
+````{r pairplot4}
 clean_play_store$types <- as.factor(clean_play_store$types)
 
 clean_play_store %>%
@@ -627,7 +644,7 @@ We can observe that there is no significant linear relationship between rating a
 To look at which app makes it to the top, we consider ratings, so we can explore correlation of different columns with ratings
 
 #### **1.Plot of reviews vs app ratings**
-``` {r review_rating_plot,message = FALSE, warning = FALSE}
+``` {r review_rating_plot}
 ggplot(data = clean_play_store) +
   geom_point(mapping = aes(x = rating, y = reviews, col = types)) +
   scale_color(palette = "hot") +
@@ -649,7 +666,7 @@ We can observe that the number of reviews influence the ratings. Generally, as t
 Let's explore other factors that might potentially influence rating
 
 #### **2.App rating vs category**
-```{r rating_category_plot,message=FALSE, warning=FALSE}
+```{r rating_category_plot}
 
 clean_play_store %>%
   ggplot(aes(x = reorder(category,rating), y = rating))+
@@ -667,7 +684,7 @@ clean_play_store %>%
 #### **3.Number of installs** {.tabset .tabset-fade .tabset-pill}
 
 ##### 3.1. Number of installs per category
-```{r installs_plot1,message=FALSE, warning=FALSE}
+```{r installs_plot1}
 
 clean_play_store%>%
   count(category, installs, types) %>%
@@ -691,7 +708,7 @@ clean_play_store%>%
 
 
 ##### 3.2.Top 10 installed categories  
-```{r top_apps_plot,message=FALSE, warning=FALSE}
+```{r top_apps_plot}
 
 clean_play_store%>%
   count(category, installs) %>%
@@ -715,7 +732,7 @@ clean_play_store%>%
 ```
 
 ##### 3.3.Ten least installed categories
-```{r least_apps_plot,message=FALSE, warning=FALSE}
+```{r least_apps_plot}
 
 
 clean_play_store%>%
@@ -742,7 +759,7 @@ clean_play_store%>%
 Since most of the apps are free, let's look at top 10 paid apps:  
 
 #### **4. Top 10 paid apps** 
-```{r plot,message=FALSE, warning=FALSE}
+```{r top_paid_apps_plot}
 
 clean_play_store %>%
   filter(types == "Paid") %>%
@@ -767,7 +784,7 @@ clean_play_store %>%
 
 #### **5. Distribution of rating for 8 categories with the largest numbers of apps** 
 
-```{r avg_rating_plot, message=FALSE, warning=FALSE}
+```{r avg_rating_plot}
 
 # Distribution of rating for 8 categories with the largest numbers of apps
 clean_play_store %>% 
@@ -784,7 +801,7 @@ clean_play_store %>%
 ```
 
 #### **6. Average rating per category** 
-```{r avg_rating_category_plot,message=FALSE, warning=FALSE}
+```{r avg_rating_category_plot}
 
 # Average rating per category
 clean_play_store %>% 
@@ -807,7 +824,7 @@ clean_play_store %>%
 
 
 #### **7. Size and rating**  
-```{r size_rating_plot, message=FALSE, warning=FALSE}
+```{r size_rating_plot}
 
 plot <- clean_play_store %>% 
   ggplot(aes(x = size_mb, y = rating, na.rm = TRUE)) + 
@@ -826,7 +843,7 @@ We can see that apps with the their sizes under 30 MB, constitute the majority w
 
 
 #### **8. Size and number of installs**  
-```{r size_installs_plot, message=FALSE, warning=FALSE}
+```{r size_installs_plot}
 
 plot <- clean_play_store %>% 
   filter(!is.na(size_mb) ) %>% 
