@@ -671,12 +671,13 @@ ggplot(data = clean_play_store) +
 ```
 
 
-We can observe that the number of reviews influence the ratings. Generally, as the number of reviews increase, the rating is higher.
+FInding: We can observe that the number of reviews influence the ratings. Generally, as the number of reviews increase, the rating is higher.
 
 
 Let's explore other factors that might potentially influence rating
 
 ### App rating vs category
+To check the relationship between category and rating, we plotted a box plot with rating on y-axis and category on x-axis. 
 ```{r rating_category_plot}
 
 clean_play_store %>%
@@ -692,9 +693,12 @@ clean_play_store %>%
          legend.position = "None")
 ```
 
+Finding: This graph shows that for some categories like TOOLS, FAMILY, FINANCE and LIFESTYLE a great majority of applications fall below first quartile. Thus, even though median rating is high, deviation from median is significant.
+
 ### Number of installs {.tabset .tabset-fade .tabset-pill}
 
 #### Number of installs per category
+Number of installs per category
 ```{r installs_plot1}
 
 clean_play_store%>%
@@ -703,7 +707,6 @@ clean_play_store%>%
   summarize(
     totalInstalls = sum(as.numeric(installs))
   ) %>%
-  arrange(-totalInstalls) %>%
   ggplot(aes(x = reorder(category, totalInstalls), y = log(totalInstalls), fill = types)) +
   geom_bar(width = 0.5,stat = "identity") +
   scale_y_continuous(labels = scales::comma) +
@@ -717,8 +720,10 @@ clean_play_store%>%
 
 ```
 
+Finding: The graph shows the log of number of installs (the values of installs varied from 0 to 1 billion) vs CATEGORY. FAMILY and GAME has the highest number of installs. EVENTS, HOUSE_AND_HOME, COMICS, LIBRARIES_AND_DESIGN and BEAUTY have the least number of installs.
 
 #### Top 10 installed categories  
+Top 10 categories with greatest number of installs. 
 ```{r top_apps_plot}
 
 clean_play_store%>%
@@ -742,7 +747,9 @@ clean_play_store%>%
 
 ```
 
-#### Ten least installed categories
+Finding: COMMUNICATION has the highest number of installs. 
+
+#### 10 least installed categories
 ```{r least_apps_plot}
 
 
@@ -766,10 +773,10 @@ clean_play_store%>%
         legend.position = "None") 
 ```
 
+Finding: Events has the least number of installed applications. 
 
-Since most of the apps are free, let's look at top 10 paid apps:  
-
-### Top 10 paid apps 
+### Top 10 paid Categories
+Top 10 categories with the highest number of installs for paid applications.   
 ```{r top_paid_apps_plot}
 
 clean_play_store %>%
@@ -791,10 +798,11 @@ clean_play_store %>%
 
 ```
 
+Finding: FAMILY and GAME has the greatest number of installs. 
 
 
 ### Distribution of rating for 8 categories with the largest numbers of apps 
-
+Here we look at the distribution of rating across different categories. We chose 8 categories with the largest number of applications. 
 ```{r avg_rating_plot}
 
 # Distribution of rating for 8 categories with the largest numbers of apps
@@ -811,7 +819,10 @@ clean_play_store %>%
 
 ```
 
+Finding: The distribution of rating varies significantly across each category.  
+
 ### Average rating per category 
+In previous graph we observed that distribution of rating as per category varies significantly. Now we want to find out what the average rating per category is. 
 ```{r avg_rating_category_plot}
 
 # Average rating per category
@@ -832,9 +843,10 @@ clean_play_store %>%
 
 ```
 
-
+Finding: This graph shows that the average rating per category is not very different. Still the "EVENTS" category has the highest average rating, and "DATING" category has the least average rating. 
 
 ### Size and rating  
+Size is an important aspect, and we want to see the relationship between size and rating of an application. 
 ```{r size_rating_plot}
 
 plot <- clean_play_store %>% 
@@ -850,10 +862,11 @@ plot <- clean_play_store %>%
 
 ```
 
-We can see that apps with the their sizes under 30 MB, constitute the majority with a good rating(4)
+Finding: We can see that majority of applications with their sizes under 25 MB, have a good rating(4).
 
 
 ### Size and number of installs  
+Size is an important characteristic of an application. Large applications might reduce the number of installs, as it reduces to targeted audience. We can test this by plotting size against installs. 
 ```{r size_installs_plot}
 
 plot <- clean_play_store %>% 
@@ -869,7 +882,7 @@ plot <- clean_play_store %>%
 
 ```
 
-Apps with sizes between 5MB and 30MB gets the most number of installs. 
+Finding: Optimally sized Applications, with sizes between 5MB and 30MB, gets the greatest number of installs. 
 
 # References
 
