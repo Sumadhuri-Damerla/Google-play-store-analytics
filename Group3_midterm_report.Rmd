@@ -1,0 +1,96 @@
+---
+title: 
+   <center><h2> Google Play Store Analytics with R </h2></center>
+subtitle: 
+   <center><h3> Midterm Report </h3> </center>
+author: 
+  <center><h5> Group3- Sumadhuri Damerla,Shaoor Jan,Ashjan Khan </h5> </center>
+output: 
+   html_document: 
+    theme: cosmo
+    highlight: monochrome
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    toc_depth: 4
+    fig_caption: true
+    number_sections: true
+    df_print: paged
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=10, fig.height=8,echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+# Introduction to the dataset  
+## Data source
+The data source used for this analysis is the *2018 google play store*(https://www.kaggle.com/lava18/google-play-store-apps) collected from Kaggle.
+
+## Description of the dataset
+The dataset is a collection of web-scraped data of 10k apps from Google Play Store.The Google Play Store originally referred as the Android Market, is Google's official store and portal for Android apps, games and other content for your Android-powered phone, tablet or Android TV device.
+
+The variables of the dataset are as follows:
+
+1)	App (Name) – Name/Title of the application
+2)	Category (App)- Category/Domain to which  the app belongs to
+3)	Rating (App)- Overall user rating of the app
+4)	Reviews (User)- Number of user reviews for the app 
+5)	Size (App)- Space or memory that the app takes up 
+6)	Installs (App)- Number of user downloads/installs 
+7)	Type (Free/Paid)-Apps may be free or paid depending on the developer’s choice
+8)	Price (App)-Price of the app if not free
+9)	Content Rating -  Age group the app is based off at - Children / Mature 21+ / Adult
+10)	Genres (Detailed Category)- An app can belong to multiple genres, For eg, a musical family game will belong to Music, Game, Family genres.
+11)	Last Updated (App)- Date when the app was last updated on Play Store 
+12)	Current Version (App)- Current version of the app available on Play Store  
+13)	Android Version (Support) – minimum version of android it takes to have the app on the device
+
+
+# Purpose of the project
+The aim of our project is to find out if we can predict ratings of an app based on different variables and we intend to perform analysis to find out different factors that influence the success of an app. These analysis might also help the developer community to build more successful apps targetting a specific audience.
+
+Also,since this is the first time we are doing data analysis using R, it is a fun way to learn and apply the concepts learnt during the course. 
+
+
+# Intended audience of the project
+We believe there's a diverse set of audience who might be interested in our project. As of Febraury 2020, 73.3% of the mobile operating system market share belongs to Android devices[]. This large community consists of the general public who use android devices and download the apps,the developer community and anyone who wants to understand how the app market works.
+
+# Data exploration using EDA
+
+
+
+# Future work (models)  
+## What are we trying to achieve (thesis/hypothesis)
+The dataset we have contains information about 10000 apps dated till 2018. With the dataset, we plan on using these "",""models to answer the following hypothesis:  
+
+1) Can we find trends in apps which make it to the top? We want to see if different variables have a common trend as the rating of the app increases.
+2) Can we predict rating for future apps based on other parameters such as number of reviews or the size of an app?
+
+To answer these questions, we will be exploring all the variables of the dataset to find if there's any relationship with the rating of the apps and if it exists,we intend to find out which of these factors will play a larger role in predicting rating. We know that  
+
+## Why is this important/interesting?
+Recently,we took part in an competition called game-jam[12] where they have to build a game based on a theme, while we successfully built the game, we thought of launching it as an application in appstore.Normally, there are many external factors influencing the app success. We thought it would be interesting to see currents trends in the market and a detailed analysis of which factors influence rating, and which categories are highly installed, what are the most famous apps and do they have any trends in common like number of installs, number of reviews, size or android-version? 
+These analysis might also help the developer community to build more successful apps targetting a specific audience.
+
+
+## How are we going to test the hypothesis?
+Since the dataset is dated till 2018, we can test using the 2019 dataset and compare if the ratings of the top apps match the results from our model. However, there are certain drawbacks because the trends might change with technological advancements, current political or 
+
+
+## Any challenges that we might encounter
+Since the dataset we are using is dated till 2018 and has limited context, for example, it does not include demographic data which might offer insights into how top apps vary with respect to regions across the world due to different cultures, different trends popular to specific geographic areas. Also, it would have been interesting to see how different trends affect the usage of the app, for instance, the current pandemic "covid-19" has called for quarantine across the globe and many people, markets and other companies are relying on smart phones and virtual connections, this will heavily increase the use of many apps across the google platform.So, we do not know how accurately we can predict the rating for future apps. 
+
+
+# References
+
+[1] [Dataset](https://www.kaggle.com/lava18/google-play-store-apps);  
+[2] [R markdown](https://bookdown.org/yihui/rmarkdown/html-document.html#tabbed-sections) ;  
+[3] [Stackoverflow](https://stackoverflow.com/questions/3993301/how-to-format-number-values-for-ggplot2-legend/15007117) ;  
+[4] [GGally](https://ggobi.github.io/ggally/rd.html#ggpairs);  
+[5] [Custom color pallete](https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2);  
+[6] [Tidying data](https://medium.com/coinmonks/dealing-with-missing-data-using-r-3ae428da2d17);  
+[7] [Colors](https://hbr.org/2014/04/the-right-colors-make-data-easier-to-read);  
+[8] [TidyVerse](https://www.tidyverse.org/);  
+[9] [ggplot2](https://ggplot2.tidyverse.org/reference/);  
+[10] [Google playstore Kernel by Danilodiogo](https://www.kaggle.com/danilodiogo/google-play-store-eda-plotting-with-highcharts/code#eda);  
+[11] [market share]https://gs.statcounter.com/os-market-share/mobile/worldwide ;  
+[12] [Global game jam]https://globalgamejam.org/ ;  
