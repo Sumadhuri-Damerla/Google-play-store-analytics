@@ -24,10 +24,10 @@ knitr::opts_chunk$set(fig.width=10, fig.height=8, fig.path='Figures/',
 ```
 
 # Introduction  
-The **google play store** [dataset](https://www.kaggle.com/lava18/google-play-store-apps) offers insights into different apps, their ratings, user-reviews, installs and many other variables. This is an analysis report of the parameters influencing the success of an app. We explore the dataset and summarise the relations between different variables
+The **google play store** [dataset](https://www.kaggle.com/lava18/google-play-store-apps) offers valuable data regarding approximatrky 10,000 different apps: ratings, user-reviews, installs, Size,category and many other variables. This is an analysis report of the parameters influencing the success of an app. We explore the dataset and summarise the relations between different variables. 
 
 ## Data source
-The data source used for this analysis is the *2018 google play store*(https://www.kaggle.com/lava18/google-play-store-apps) collected from Kaggle.
+The data source used for this analysis is the *2018 google play store*(https://www.kaggle.com/lava18/google-play-store-apps) It is provided by Kaggle. This work is licensed under the Creative Commons Attribution 3.0 Unported License..
 
 ## R packages
 Below is a list of R libraries used for this analysis.Package tidyverse is a collection of R packages for data science, including dplyr and tidyr for data processing and ggplot2 for graphics. Package ggExtra is for plotting marginal graphs and GGally is for plotting correlograms.
@@ -126,7 +126,7 @@ head(play_store)
 ```{r view-data-rows}
 dim(play_store)
 ```
-The dataset contains `r dim(play_store) [1] ` rows and `r dim(play_store) [2] ` columns. By looking deeper into the dataset, it become clear that there are duplicate observations. The number of unique values in the column are `r length(unique(play_store$app)) `. Thus, we need to remove `r (dim(play_store) [1] - length(unique(play_store$app))) ` duplicate values.
+The dataset contains `r dim(play_store) [1] ` rows and `r dim(play_store) [2] ` columns. By looking deeper into the dataset, it become clear that there are duplicate observations. The number of unique values in the column are 9660. Thus, we need to remove 1181 duplicate  values.
 
 
 ### Summary of data
@@ -152,11 +152,8 @@ colnames(play_store) <- c("app", "category", "rating", "reviews", "size_mb", "in
 
 ### App column:
 
-+ The number of rows in the dataset equals 10841 but the application names column has only `r length(unique(play_store$app)) ` unique values, ie there are applications with the same name.On observation, we found that these duplicate applications are due to a data collection error for two reasons:
-  * Duplicate applications are recognized applications like Google Drive, Google Photos and Duolingo having high number of installs.These application names are registered trademarks, so launching apps with these same names can lead to legal problems if there has been a decision to defend this trademark.  
-  * The dataset is published on Kaggle in 5 different versions, with a duration of one month between the first and the last version. It could therefore evolve during this period.  
-+ So, we chose to remove the duplicate values
-
++ The number of rows in the dataset equals 10841 but the application names column has only `r length(unique(play_store$app)) ` unique values, ie there are applications with the same name.On observation, we found that these duplicate applications are due to a data collection error.
++ Removing duplicate values
 ```{r removing-duplicatevalues}
 arranged_data_set <- play_store %>% 
   arrange(app, desc(reviews)) #order in descending order of reviews
@@ -184,8 +181,8 @@ There are  `r length(unique(play_store$category))` number of unique categories o
 ```
 
 + We can observe that the family category has the most number of apps followed by game and tool categories.  
-+ We have one observation having a category named 1.9 with a single application. Examining this application, we notice that it is an error due to a left shift.  
-+ So, we remove the data for wrong entered app:"Life Made WI-Fi Touchscreen Photo Frame"
++ We have one observation having a category named 1.9 with a single application. Examining this application, we notice that it is an error due to a left shift. 
++ So, we remove the data for app:"Life Made WI-Fi Touchscreen Photo Frame"
 
 ```{r remove_wrongdata}
 #### Removing wrong app-data ####
@@ -221,7 +218,7 @@ table(is.na(play_store))
 colSums(is.na(play_store))
 ```
 
-Missing rates are relatively very low. We choose to delete them keeping in mind that they don't affect the analysis. So we remove the observations with NaN ratings
+By looking closely, we realized they not all NaN for ratting indicates missing value. In some cases, the number of reviews were zero, in which case it made sense for rating to be NaN, so we kept those values. Missing rates were relatively very low so we decided to remove them, which will ensure that accuracy of our data.
 
 ```{r remove-missing-data}
 #### removing observations with reviews but NaN rating ####
@@ -245,7 +242,7 @@ clean_play_store %>%
    theme(axis.text.x = element_text(vjust=0.5))
 ```
 
-  + We can observe that there are very few apps with low ratings and most ratings are between 3-5.
+  + We can observe that the number of apps with low ratings are less in number, and most apps have a ratings between 3-5.
 
 ### Review :  
 We modify datatype of "reviews" column to numeric  
@@ -275,8 +272,7 @@ clean_play_store %>%
 summary(clean_play_store$reviews)
 ```
 
-   + The number of reviews follows a left skewed distribution. About half the apps 
-have more than 2747 reviews.(blue line is the median)
+   + The number of reviews follows a left skewed distribution. About half the apps have more than 2747 reviews.(blue line is the median)
  
 ### Size:    
 We convert all the app sizes to mb and modify it's datatype to numeric 
@@ -308,7 +304,7 @@ clean_play_store %>%
    + There is a high concentration of apps having sizes less than ~25MB and almost all apps have sizes within 0-100MB.
 
 ### Price:  
-We already know that paid apps only account for 7.46% of our dataset. Therefore, we will only look at the prices of paid applications. To do this, we will eliminate the dollar symbol and convert prices into numerical values.  
+We already know that paid apps only account for 7.46% of our dataset. We eliminate the dollar symbol and convert prices into numerical values.  
 ```{r price-tonumeric}
 ####  price column: remove '$' and convert into numeric ####
   # removing "$"
@@ -337,7 +333,7 @@ clean_play_store %>%
 
 ### Types:  
 
-There is one type with NaN value, on observing, we find that price of this app is equal to 0 which means the App is Free. So, we change the value of Type to Free  
+THis column include three values: Paid, Free, NaN. By looking deeper we see that there is only one NaN value. By looking at its price we can see that it is 0, which means the App is Free. So, we change the value of Type to Free.
 ```{r types-col-clean}
 summary(play_store$types) #print summary of types column
 ## There is one row with NaN value, let's check this row
@@ -365,7 +361,7 @@ clean_play_store %>%
   scale_fill(palette = "main") 
 ```
 
-We can see that most of the apps are free and there are very few apps which are pricy. Although, it is possible that these free apps have in-app purchases.
+We can see that most of the apps are free and there are very few apps which are priced. Although, it is possible that these free apps have in-app purchases.
 
 ### Others:
  + We remove unwanted characters in "installs" column and modify it's datatype to numeric   
@@ -380,7 +376,7 @@ We can see that most of the apps are free and there are very few apps which are 
   summary(clean_play_store$installs)
 ```
 
- + Content rating column has two variable data, so we seperate the column to contain  only the content rating values   
+ + Content rating column has two variables stored in a single column i.e. content rating and min age. So we split the column into 2 columns: content_rating and min_age. 
 ```{r contentrating-clean}
 #### seperate content rating column ####
   clean_play_store$content_rating <- gsub( '\\+', '', clean_play_store$content_rating )
@@ -553,7 +549,7 @@ clean_play_store %>%
          legend.position = "None")
 ```
 
-**Finding:** This graph shows that for some categories like TOOLS, FAMILY, FINANCE and LIFESTYLE a great majority of applications fall below first quartile. Thus, even though median rating is high, deviation from median is significant.
+**Finding:** This graph shows that for some categories like TOOLS, FAMILY, FINANCE and LIFESTYLE a great majority of applications fall below first quartile. Thus, even though median rating for these applications is high, deviation from median is significant.
 
 
 ### Distribution of rating for 8 categories with the largest numbers of apps   
@@ -575,7 +571,7 @@ clean_play_store %>%
 **Finding:** The distribution of rating varies significantly across each category.  
 
 ### Average rating per category 
-In previous graph we observed that distribution of rating as per category varies significantly. Now we want to find out what the average rating per category is. 
+In previous graph we observed that distribution of rating varies significantly for different category. Now we want to find out what the average rating per category is. 
 ```{r avgrating-categoryplot}
 # Average rating per category
 clean_play_store %>% 
@@ -805,11 +801,11 @@ clean_play_store %>%
 
 
 # Conclusion 
- + To get most success from an app, it has to have maximum number of reviews and maximum number of ratings. These are the other trends we found:  
-   * Apps should atleast support 4.1 android version or more to succeed.This is expected because the majority of users have smart phones with constant android updates.  
-   * They have high chances of success if the genre is family, game, communication or productivity apps whereas food_and_drink, auto_vehicles categories have very low probability to succeed.  
-   * The apps which are be free have huge success rates however there are a few exceptions to this.  
-   * Apps should be optimally sized between 5MB and 30MB.  
+ + For an application to be successful, it has to have maximum number of reviews and maximum number of ratings. Following are the factors that impact the success of an application:  
+   * Apps should atleast support android version 4 or more to succeed.This is expected because the majority of users have smart phones with constant android updates.  
+   * They have high chances of success if the Category is family, game, communication or productivity apps whereas food_and_drink, auto_vehicles categories have very low probability to succeed.  
+   * The apps which are free have huge success rates however there are a few exceptions to this.  
+   * Apps should be optimally sized i.e. below 30MB.   
 
 # References
 
