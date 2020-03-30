@@ -46,7 +46,7 @@ The variables of the dataset are as follows:
 
 
 # Purpose of the project
-The aim of our project is to find out if we can predict ratings of an app based on different variables and we intend to perform analysis to find out different factors that influence the success of an app. To gather insights from data that is valuable for android developer community. These analyses will help them build successful apps, by taking data backed decisions, and focusing on those aspects of applications that matters most.
+The aim of our project is to find out if we can predict ratings of an app based on different variables and we intend to summarise the different factors that influence the success of an app. To gather insights from data that is valuable for android developer community. These analyses will help them build successful apps, by taking accurate data-based decisions, and focusing on those aspects of applications that matters most.
 
 We also aim to strengthen the concepts learned during the course by taking a hands-on approach.
 
@@ -54,6 +54,89 @@ We also aim to strengthen the concepts learned during the course by taking a han
 We believe there's a diverse set of audience who might be interested in our project. As of Febraury 2020, 73.3% of the mobile operating system market share belongs to Android devices[]. Because of such a large market share it has a large, and growing, developer community. This project is primarily intended for this growing developer community. It will help them make data backed decisions before launching their application. Besides developers, it is also for hobbiests, tech journalists and Google Play Store users.  
 
 # Data exploration using EDA
+**Basic EDA:**
+```{r python_pairplot,echo=FALSE,message=FALSE, warning=FALSE}
+# Define variable containing url
+url <- "/Users/dsuma/Desktop/Courses/DataAnalytics-R/GroupProjectDirectory/PlayStoreAnalyticsRepo/pairplot.png"
+```
+![](`r url`)
+
+**Further EDA to find factors for success of an app:**  
+Generally, the most successful apps have high ratings and high installs.To look at which app makes it to the top, we consider ratings and installs, so we explore these to find any relationship or trends
+
+
+## Rating column in depth 
+First, we plot correlograms of ratings versus different columns to find any relationship.  
+
+### Plot of reviews vs app ratings
+
+
+
+**Finding:** We can observe that the number of reviews influence the ratings. Generally, as the number of reviews increase, the rating is higher.
+
+
+We now explore other factors that might potentially influence rating
+
+### App rating vs category  
+To check the relationship between category and rating, we plotted a box plot with rating on y-axis and category on x-axis.   
+
+
+**Finding:** This graph shows that for some categories like TOOLS, FAMILY, FINANCE and LIFESTYLE a great majority of applications fall below first quartile. Thus, even though median rating is high, deviation from median is significant.
+
+
+### Distribution of rating for 8 categories with the largest numbers of apps   
+Here we look at the distribution of rating across different categories. We chose 8 categories with the largest number of applications.  
+
+
+**Finding:** The distribution of rating varies significantly across each category.  
+
+### Average rating per category 
+In previous graph we observed that distribution of rating as per category varies significantly. Now we want to find out what the average rating per category is. 
+
+
+**Finding:** This graph shows that the average rating per category is not very different. Still the "EVENTS" category has the highest average rating, and "DATING" category has the least average rating. 
+
+### Size and rating  
+Size is an important aspect, and we want to see the relationship between size and rating of an application. 
+
+
+**Finding:** We can see that majority of applications with their sizes under 25 MB, have a good rating(4).
+
+
+## Installs column in depth   
+First, we plot correlograms of installs versus different columns to find any relationship. 
+
+### Number of installs {.tabset .tabset-fade .tabset-pill}
+
+#### Number of installs per category
+
+**Finding:** The graph shows the log of number of installs (the values of installs varied from 0 to 1 billion) vs CATEGORY. FAMILY and GAME has the highest number of installs. EVENTS, HOUSE_AND_HOME, COMICS, LIBRARIES_AND_DESIGN and BEAUTY have the least number of installs.
+
+
+#### Top 10 installed categories  
+**Finding:** COMMUNICATION has the highest number of installs. 
+
+#### 10 least installed categories
+**Finding:** Events has the least number of installed applications. 
+
+### Top 10 paid Categories
+**Finding:** FAMILY and GAME has the greatest number of installs. 
+
+### Size Vs. number of installs    
+Size is an important characteristic of an application. Large applications might reduce the number of installs, as it reduces to targeted audience. We can test this by plotting size against installs. 
+
+**Finding:** Optimally sized Applications, with sizes between 5MB and 30MB, gets the greatest number of installs. 
+
+### Number of installs based on support by minimum android version
+**Finding:** 4.1 android version has the maximum number of installs.
+
+
+# Conclusion 
+ + To get most success from an app, it has to have maximum number of reviews and maximum number of ratings. These are the other trends we found:  
+   * Apps should atleast support 4.1 android version or more to succeed.This is expected because the majority of users have smart phones with constant android updates.  
+   * They have high chances of success if the genre is family, game, communication or productivity apps whereas food_and_drink, auto_vehicles categories have very low probability to succeed.  
+   * The apps which are be free have huge success rates however there are a few exceptions to this.  
+   * Apps should be optimally sized between 5MB and 30MB.  
 
 
 
@@ -61,19 +144,23 @@ We believe there's a diverse set of audience who might be interested in our proj
 ## What are we trying to achieve (thesis/hypothesis)
 The dataset we have contains information about 10000 apps dated till 2018. With the dataset, we plan on using Clustering Model, Forecast Model and Random Forest to perform predictive analysis. We want to answer the following hypothesis:  
 
-1) Find similarities in apps that make it to the top of Play Store. Factors contribute to the success of applications.
-2) Predict rating of apps based on other parameters such as number of reviews or the size of an app. 
+1) Find similarities in apps that make it to the top of Play Store. Factors contributing to the success of applications.
+2) Can we predict rating of apps based on other parameters such as number of reviews or the size of an app?
 
-To answer these questions, we will be exploring all the variables of this dataset. Try to find if there's any relationship between rating and other variables. We intend to find out which of these variables will play the most important role in predicting rating.
+To answer these questions, we will be exploring all the variables of this dataset to find if there's any relationship between rating and other variables. We intend to find out which of these variables will play the most important role in predicting rating.
  
 
 ## Why is this important/interesting?
-Recently, we took part in a competition called game-jam [12] where they must build a game based on a theme, while we successfully built the game, we thought of launching it at Google Play Store. Normally, there are many external factors influencing an applications success. We thought it would be interesting to see currents trends in the market and a detailed analysis of which factors influence rating, and which categories are highly installed, what are the most famous applications and do they have any trends in common like number of installs, number of reviews, size or android-version? 
-These analyses will also help the developer community to build more successful apps targeting a specific audience.
+Before we started this project, we took part in a competition called game-jam [12] where we built a game,we had an idea of launching it on Google Play Store.We then thought it would be interesting to see currents trends in the market and to do a detailed analysis to get more insights to the following questions:  
+1.Factors that influence the success of an app,    
+2.Which categories are highly installed    
+3.What are the most famous applications and do they have any trends in common like number of installs, number of reviews, size or android-version? and etc  
+
+These analysis inturn will aid the developer community to build successful apps targeting a specific audience.
 
 
 ## How are we going to test the hypothesis?
-Since the dataset is dated till 2018.  We can test by comparing out pridictions with the latest data. 
+Since the dataset is dated till 2018.  We are thinking to test it by comparing the predictions of our model with the 2019 dataset or the latest dataset. 
 
 
 ## Any challenges that we might encounter
