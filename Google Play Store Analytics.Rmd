@@ -24,10 +24,10 @@ knitr::opts_chunk$set(fig.width=10, fig.height=8, fig.path='Figures/',
 ```
 
 # Introduction  
-The **google play store** [dataset](https://www.kaggle.com/lava18/google-play-store-apps) offers valuable data regarding approximatrky 10,000 different apps: ratings, user-reviews, installs, Size,category and many other variables. This is an analysis report of the parameters influencing the success of an app. We explore the dataset and summarise the relations between different variables. 
+The **google play store** [dataset](https://www.kaggle.com/lava18/google-play-store-apps) offers valuable insights into ~10k different apps, it's ratings, user-reviews, installs, size,category and many other variables. This is an analysis report of the parameters influencing the success of an app. We explore the dataset and summarise the relations between different variables. 
 
 ## Data source
-The data source used for this analysis is the *2018 google play store*(https://www.kaggle.com/lava18/google-play-store-apps) It is provided by Kaggle. This work is licensed under the Creative Commons Attribution 3.0 Unported License..
+The data source used for this analysis is the *2018 google play store*(https://www.kaggle.com/lava18/google-play-store-apps) It is created by Lavanya Gupta and it's an open source on Kaggle website. 
 
 ## R packages
 Below is a list of R libraries used for this analysis.Package tidyverse is a collection of R packages for data science, including dplyr and tidyr for data processing and ggplot2 for graphics. Package ggExtra is for plotting marginal graphs and GGally is for plotting correlograms.
@@ -152,8 +152,10 @@ colnames(play_store) <- c("app", "category", "rating", "reviews", "size_mb", "in
 
 ### App column:
 
-+ The number of rows in the dataset equals 10841 but the application names column has only `r length(unique(play_store$app)) ` unique values, ie there are applications with the same name.On observation, we found that these duplicate applications are due to a data collection error.
-+ Removing duplicate values
++ The number of rows in the dataset equals 10841 but the application names column has only `r length(unique(play_store$app)) ` unique values, ie there are applications with the same name.On observation, we found that these duplicate applications are due to a data collection error because of the following reasons:
+  * Most duplicate apps are popular apps like Google drive with high number of installs, so if were to be duplicated, there would have been legal trademark issues.
+  * The version of the dataset on Kaggle has been updated , so it might be corrected in that.
++ So, we chose to remove the duplicate values
 ```{r removing-duplicatevalues}
 arranged_data_set <- play_store %>% 
   arrange(app, desc(reviews)) #order in descending order of reviews
@@ -218,7 +220,7 @@ table(is.na(play_store))
 colSums(is.na(play_store))
 ```
 
-By looking closely, we realized they not all NaN for ratting indicates missing value. In some cases, the number of reviews were zero, in which case it made sense for rating to be NaN, so we kept those values. Missing rates were relatively very low so we decided to remove them, which will ensure that accuracy of our data.
+ + By looking closely, we realized that not all NaN for rating indicates missing value. In some cases, the number of reviews were zero, in which case it made sense for rating to be NaN, so we kept those values. Missing rates were relatively very low so we decided to remove them, which will have low impact on the  accuracy of our analysis.
 
 ```{r remove-missing-data}
 #### removing observations with reviews but NaN rating ####
@@ -333,7 +335,7 @@ clean_play_store %>%
 
 ### Types:  
 
-THis column include three values: Paid, Free, NaN. By looking deeper we see that there is only one NaN value. By looking at its price we can see that it is 0, which means the App is Free. So, we change the value of Type to Free.
+This column includes three values: Paid, Free, NaN. We observe that there is only one NaN value whose price is 0, which means that the App is Free. So, we change the value of Type to Free.
 ```{r types-col-clean}
 summary(play_store$types) #print summary of types column
 ## There is one row with NaN value, let's check this row
@@ -361,7 +363,7 @@ clean_play_store %>%
   scale_fill(palette = "main") 
 ```
 
-We can see that most of the apps are free and there are very few apps which are priced. Although, it is possible that these free apps have in-app purchases.
+ + We can see that most of the apps are free and there are very few apps which are priced. Although, it is possible that these free apps have in-app purchases.
 
 ### Others:
  + We remove unwanted characters in "installs" column and modify it's datatype to numeric   
@@ -611,63 +613,6 @@ plot <- clean_play_store %>%
 
 
 ## Installs column in depth   
-First, we plot correlograms of installs versus different columns to find any relationship. 
-
-### Pair Plot {.tabset .tabset-fade .tabset-pills}  
-#### Installs vs Reviews  
-````{r installs-reviews-plot}
-clean_play_store$Reviews <- log(clean_play_store$reviews) #transforming the reviews value to logarithmic values
-clean_play_store$Installs <- log(clean_play_store$installs) #transforming the installs values to logarithmic values
-
-clean_play_store %>%
-  select(Installs, Reviews) %>%
-  ggpairs(
-          mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Reviews",
-       caption = "Source: google play store dataset") 
-```
-
-#### Installs vs Size
-````{r installs-size-plot}
-clean_play_store %>%
-  select(Installs, size_mb) %>%
-  ggpairs(
-          mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Size (MB)",
-        caption = "Source: google play store dataset") 
-```
-
-#### Installs vs Price
-````{r installs-price-plot}
-clean_play_store$Price <- log(clean_play_store$price) #transforming the price value to logarithmic values
-
-clean_play_store %>%
-  select(Installs, Price) %>%
-  ggpairs(mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Price",
-       caption = "Source: google play store dataset")
-```
-
-#### Installs vs Types  
-````{r installs-types-plot}
-clean_play_store$types <- as.factor(clean_play_store$types) #changing the types column to factor
-
-clean_play_store %>%
-  select(Installs, types) %>%
-  ggpairs(mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Types",
-       caption = "Source: google play store dataset")
-```
-
-**Finding:**  
- + Each correlation index talks about the relationship between plotted columns. If the index is 1, it means they are directly related.  
- + Each plot on the diagonal refers to the density plot of the respective column  
- + We can observe that there is no significant linear relationship between installs and the plotted numerical variables.  
-
 ### Number of installs {.tabset .tabset-fade .tabset-pill}
 
 #### Number of installs per category

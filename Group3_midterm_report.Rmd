@@ -26,7 +26,7 @@ knitr::opts_chunk$set(fig.width=10, fig.height=8,echo=FALSE, warning=FALSE, mess
 The data source used for this analysis is the *2018 google play store*(https://www.kaggle.com/lava18/google-play-store-apps) collected from Kaggle.
 
 ## Description of the dataset
-The dataset is a collection of web-scraped data of 10,000 apps from Google Play Store. Google Play Store originally referred as the Android Market, is Google's official store and portal for Android apps, games and other content for Android-powered phone, tablet or Android TV device. As of May 2017, it has over two billion monthly active users, the largest installed base of any operating system, and as of January 2020, the Google Play Store features over 2.9 million apps.
+The dataset is a collection of web-scraped data of 10,000 apps from Google Play Store. Google Play Store originally referred as the Android Market, is Google's official store and portal for Android apps, games and other content for Android-powered phone, tablet or Android TV device. As of May 2017, it has over two billion monthly active users, the largest installed base of any operating system, and as of January 2020, the Google Play Store features over 2.9 million apps[13].
 
 The variables of the dataset are as follows:
 
@@ -46,14 +46,15 @@ The variables of the dataset are as follows:
 
 
 # Purpose of the project
-The aim of our project is to find out if we can predict ratings of an app based on different variables and we intend to summarise the different factors that influence the success of an app. To gather insights from data that is valuable for android developer community. These analyses will help them build successful apps, by taking accurate data-based decisions, and focusing on those aspects of applications that matters most.
+ + The aim of our project is to find out if we can predict ratings of an app based on different variables and we intend to summarise the different factors that influence the success of an app.These analysis might also help the developer community to build more successful apps by taking accurate data-based decisions, and focusing on those aspects of applications that matters most.
 
-We also aim to strengthen the concepts learned during the course by taking a hands-on approach.
+ + Also,since this is the first time we are doing data analysis using R, it is a fun way to learn and  to strengthen the concepts learned during the course by taking a hands-on approach.
 
 # Intended audience of the project
-We believe there's a diverse set of audience who might be interested in our project. As of Febraury 2020, 73.3% of the mobile operating system market share belongs to Android devices[]. Because of such a large market share it has a large, and growing, developer community. This project is primarily intended for this growing developer community. It will help them make data backed decisions before launching their application. Besides developers, it is also for hobbiests, tech journalists and Google Play Store users.  
+ + We believe there's a diverse set of audience who might be interested in our project. As of Febraury 2020, 73.3% of the mobile operating system market share belongs to Android devices[11]. This large community consists of the general public who use android devices and appstore,the developer community and anyone who wants to understand how the app market works.
 
-# Data exploration using EDA
+ + This project is primarily intended for the growing developer community. It will help them make data backed decisions before launching their application. Besides developers, it is also helpful for tech journalists, Google Play Store users or any other interested party. 
+
 ```{r global-option}
 knitr::opts_chunk$set(fig.width=10, fig.height=8,
                       echo=FALSE, warning=FALSE, message=FALSE)
@@ -138,13 +139,30 @@ scale_fill <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) 
 clean_play_store <- read_csv("data/tidyplaystore.csv") #read_csv returns a dataframe
 ```
 
-# Further EDA to find factors for success of an app
+# Exploratory Data Analysis to find factors for success of an app
 Generally, the most successful apps have high ratings and high installs.To look at which app makes it to the top, we consider ratings and installs, so we explore these to find any relationship or trends
 
 ## Rating column in depth 
-First, we plot correlograms of ratings versus different columns to find any relationship.  
+### Distribution of rating  
+```{r rating-density-plot}
+#Density plot
+clean_play_store %>%
+  ggplot(aes(x = rating)) +
+  geom_density(aes(fill = factor(types)), alpha = 0.5) + #types correspond to paid/free
+  labs(title = "Density plot",
+       subtitle = "App Rating grouped by types",
+       y = "Values",
+       x = "Rating",
+       caption = "Source: google play store dataset",
+       fill = "#Types") +
+   theme(axis.text.x = element_text(vjust=0.5))
+```
 
-### Pair plot {.tabset .tabset-fade .tabset-pills}  
++ We can observe that the number of apps with low ratings are less in number, and most apps have a ratings between 3-5.
+
+First, we plot correlograms of ratings versus different columns to find any relationship. Correlograms are useful to understand the relationship between different numerical variables. If the correlogram index is 1, it means that the variables are directly proportional to each other.  
+
+### Correlogram plots {.tabset .tabset-fade .tabset-pills}  
 #### Rating vs Reviews  
 ````{r rating-reviews-plot}
 clean_play_store$Reviews <- log(clean_play_store$reviews) #transforming the reviews value to logarithmic values
@@ -206,7 +224,7 @@ clean_play_store %>%
 ```
 
 **Finding:**  
- + Each correlation index talks about the relationship between plotted columns. If the index is 1, it means they are directly related.  
+ + Each correlation index talks about the relationship between plotted columns. If the index is 1, it means they have linear relationship 
  + Each plot on the diagonal refers to the density plot of the respective column  
  + We can observe that there is no significant linear relationship between rating and the plotted numerical variables.  
 
@@ -310,62 +328,6 @@ plot <- clean_play_store %>%
 
 
 ## Installs column in depth   
-First, we plot correlograms of installs versus different columns to find any relationship. 
-
-### Pair Plot {.tabset .tabset-fade .tabset-pills}  
-#### Installs vs Reviews  
-````{r installs-reviews-plot}
-clean_play_store$Reviews <- log(clean_play_store$reviews) #transforming the reviews value to logarithmic values
-clean_play_store$Installs <- log(clean_play_store$installs) #transforming the installs values to logarithmic values
-
-clean_play_store %>%
-  select(Installs, Reviews) %>%
-  ggpairs(
-          mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Reviews",
-       caption = "Source: google play store dataset") 
-```
-
-#### Installs vs Size
-````{r installs-size-plot}
-clean_play_store %>%
-  select(Installs, size_mb) %>%
-  ggpairs(
-          mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Size (MB)",
-        caption = "Source: google play store dataset") 
-```
-
-#### Installs vs Price
-````{r installs-price-plot}
-clean_play_store$Price <- log(clean_play_store$price) #transforming the price value to logarithmic values
-
-clean_play_store %>%
-  select(Installs, Price) %>%
-  ggpairs(mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Price",
-       caption = "Source: google play store dataset")
-```
-
-#### Installs vs Types  
-````{r installs-types-plot}
-clean_play_store$types <- as.factor(clean_play_store$types) #changing the types column to factor
-
-clean_play_store %>%
-  select(Installs, types) %>%
-  ggpairs(mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Installs vs Types",
-       caption = "Source: google play store dataset")
-```
-
-**Finding:**  
- + Each correlation index talks about the relationship between plotted columns. If the index is 1, it means they are directly related.  
- + Each plot on the diagonal refers to the density plot of the respective column  
- + We can observe that there is no significant linear relationship between installs and the plotted numerical variables.  
 
 ### Number of installs {.tabset .tabset-fade .tabset-pill}
 
