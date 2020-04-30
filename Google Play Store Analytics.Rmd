@@ -728,7 +728,7 @@ plot <- clean_play_store %>%
 
 
 ### Number of installs based on support by minimum android version
-```{r android_ver,warning=FALSE,message=FALSE}
+```{r android_ver}
 clean_play_store %>%
   ggplot(aes(x = min_android_ver, fill = types )) +
   geom_bar(width = .5, alpha = 0.7, na.rm = TRUE) +
@@ -751,6 +751,7 @@ clean_play_store %>%
    * They have high chances of success if the Category is family, game, communication or productivity apps whereas food_and_drink, auto_vehicles categories have very low probability to succeed.  
    * The apps which are free have huge success rates however there are a few exceptions to this.  
    * Apps should be optimally sized i.e. below 30MB.   
+   
 
 # References
 

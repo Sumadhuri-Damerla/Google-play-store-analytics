@@ -1,21 +1,14 @@
 ---
-title: 
-   <center><h2> Google Play Store Analytics with R </h2></center>
-subtitle: 
-   <center><h3> Midterm Report </h3> </center>
-author: 
-  <center><h5> Group3- Sumadhuri Damerla,Shaoor Jan,Ashjan Khan </h5> </center>
-output: 
-   html_document: 
-    theme: cosmo
-    highlight: monochrome
-    toc: true
-    toc_float: true
-    toc_collapsed: true
-    toc_depth: 4
-    fig_caption: true
-    number_sections: true
+title: "Google Play Store Analytics with R"
+author: "Sumadhuri Damerla,Shaoor Jan,Ashjan Khan"
+subtitle: Final Report
+output:
+  pdf_document:
     df_print: paged
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: '2'
 ---
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=10, fig.height=8,echo=FALSE, warning=FALSE, message=FALSE)
@@ -55,10 +48,6 @@ The variables of the dataset are as follows:
 
  + This project is primarily intended for the growing developer community. It will help them make data backed decisions before launching their application. Besides developers, it is also helpful for tech journalists, Google Play Store users or any other interested party. 
 
-```{r global-option}
-knitr::opts_chunk$set(fig.width=10, fig.height=8,
-                      echo=FALSE, warning=FALSE, message=FALSE)
-```
 
 ```{r load-libraries}
 library(tidyverse)
@@ -163,8 +152,8 @@ clean_play_store %>%
 
 First, we plot correlograms of ratings versus different columns to find any relationship. Correlograms are useful to understand the relationship between different numerical variables. If the correlogram index is 1, it means that the variables are directly proportional to each other.  
 
-### Correlogram plots {.tabset .tabset-fade .tabset-pills}  
-#### Rating vs Reviews  
+## Correlogram plots 
+### Rating vs Reviews  
 ````{r rating-reviews-plot}
 clean_play_store$Reviews <- log(clean_play_store$reviews) #transforming the reviews value to logarithmic values
 
@@ -177,7 +166,7 @@ clean_play_store %>%
        caption = "Source: google play store dataset") 
 ```
 
-#### Rating vs Size
+### Rating vs Size
 ````{r rating-size-plot}
 clean_play_store %>%
   select(rating, size_mb) %>%
@@ -188,7 +177,7 @@ clean_play_store %>%
         caption = "Source: google play store dataset") 
 ```
 
-#### Rating vs Installs
+### Rating vs Installs
 ````{r rating-installs-plot}
 clean_play_store$Installs <- log(clean_play_store$installs) #transforming the installs values to logarithmic values
 
@@ -200,7 +189,7 @@ clean_play_store %>%
        caption = "Source: google play store dataset")
 ```
 
-#### Rating vs Price
+### Rating vs Price
 ````{r rating-price-plot}
 clean_play_store$Price <- log(clean_play_store$price) #transforming the price value to logarithmic values
 
@@ -212,7 +201,7 @@ clean_play_store %>%
        caption = "Source: google play store dataset")
 ```
 
-#### Rating vs Types  
+### Rating vs Types  
 ````{r rating-types-plot}
 clean_play_store$types <- as.factor(clean_play_store$types) #changing the types column to factor
 
@@ -264,7 +253,8 @@ clean_play_store %>%
        y = "Rating",
        caption = "Source: google play store dataset") +
    theme(axis.text.x = element_text(angle = 90),
-         legend.position = "None")
+         legend.position = "None") +
+    coord_flip()
 ```
 
 **Finding:** This graph shows that for some categories like TOOLS, FAMILY, FINANCE and LIFESTYLE a great majority of applications fall below first quartile. Thus, even though median rating is high, deviation from median is significant.
@@ -272,6 +262,7 @@ clean_play_store %>%
 
 ### Distribution of rating for 8 categories with the largest numbers of apps   
 Here we look at the distribution of rating across different categories. We chose 8 categories with the largest number of applications.  
+
 ```{r avg-rating-distributionplot}
 # Distribution of rating for 8 categories with the largest numbers of apps
 clean_play_store %>% 
@@ -289,7 +280,8 @@ clean_play_store %>%
 **Finding:** The distribution of rating varies significantly across each category.  
 
 ### Average rating per category 
-In previous graph we observed that distribution of rating as per category varies significantly. Now we want to find out what the average rating per category is. 
+In previous graph we observed that distribution of rating as per category varies significantly. Now we want to find out what the average rating per category is.
+
 ```{r avgrating-categoryplot}
 # Average rating per category
 clean_play_store %>% 
@@ -305,7 +297,7 @@ clean_play_store %>%
        x = "Category",
       caption = "Source: google play store dataset") +
   theme(axis.text.x = element_text(angle = 90),
-        legend.position = "none" ) 
+        legend.position = "none" )
 ```
 
 **Finding:** This graph shows that the average rating per category is not very different. Still the "EVENTS" category has the highest average rating, and "DATING" category has the least average rating. 
@@ -329,10 +321,7 @@ plot <- clean_play_store %>%
 
 
 ## Installs column in depth   
-
-### Number of installs {.tabset .tabset-fade .tabset-pill}
-
-#### Number of installs per category
+### Number of installs per category
 ```{r installs-percategory}
 clean_play_store%>%
   count(category, installs, types) %>%
@@ -349,13 +338,15 @@ clean_play_store%>%
        y = "Number of Installs(log)",
        caption = "Source: google play store dataset") +
   scale_fill(palette = "main") +
-  theme(axis.text.x = element_text(angle = 90)) 
+  theme(axis.text.x = element_text(angle = 90)) +
+  coord_flip()
 ```
 
 **Finding:** The graph shows the log of number of installs (the values of installs varied from 0 to 1 billion) vs CATEGORY. FAMILY and GAME has the highest number of installs. EVENTS, HOUSE_AND_HOME, COMICS, LIBRARIES_AND_DESIGN and BEAUTY have the least number of installs.
 
-#### Top 10 installed categories  
+### Top 10 installed categories  
 Top 10 categories with greatest number of installs. 
+
 ```{r top10-installed-categories}
 clean_play_store%>%
   count(category, installs) %>%
@@ -374,12 +365,13 @@ clean_play_store%>%
        caption = "Source: google play store dataset") +
   scale_y_continuous(labels = scales::comma) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
-        legend.position = "None") 
+        legend.position = "None") +
+  coord_flip()
 ```
 
 **Finding:** COMMUNICATION has the highest number of installs. 
 
-#### 10 least installed categories
+### 10 least installed categories
 ```{r bottom10-installed-categories}
 clean_play_store%>%
   count(category, installs) %>%
@@ -398,7 +390,8 @@ clean_play_store%>%
        caption = "Source: google play store dataset") +
   scale_y_continuous(labels = scales::comma) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
-        legend.position = "None") 
+        legend.position = "None") +
+  coord_flip()
 ```
 
 **Finding:** Events has the least number of installed applications. 
@@ -461,41 +454,15 @@ clean_play_store %>%
 
 **Finding:** 4.1 android version has the maximum number of installs.
 
+#Models
+```{r models}
 
-# Conclusion 
- + To get most success from an app, it has to have maximum number of reviews and maximum number of ratings. These are the other trends we found:  
-   * Apps should atleast support 4.1 android version or more to succeed.This is expected because the majority of users have smart phones with constant android updates.  
-   * They have high chances of success if the genre is family, game, communication or productivity apps whereas food_and_drink, auto_vehicles categories have very low probability to succeed.  
-   * The apps which are be free have huge success rates however there are a few exceptions to this.  
-   * Apps should be optimally sized between 5MB and 30MB.  
+
+```
 
 
 
-# Future work (models)  
-## What are we trying to achieve (thesis/hypothesis)
-The dataset we have contains information about 10000 apps dated till 2018. With the dataset, we plan on using Clustering Model, Forecast Model and Random Forest to perform predictive analysis. We want to answer the following hypothesis:  
-
-1) Find similarities in apps that make it to the top of Play Store. Factors contributing to the success of applications.
-2) Can we predict rating of apps based on other parameters such as number of reviews or the size of an app?
-
-To answer these questions, we will be exploring all the variables of this dataset to find if there's any relationship between rating and other variables. We intend to find out which of these variables will play the most important role in predicting rating.
- 
-
-## Why is this important/interesting?
-Before we started this project, we took part in a competition called game-jam [12] where we built a game,we had an idea of launching it on Google Play Store.We then thought it would be interesting to see currents trends in the market and to do a detailed analysis to get more insights to the following questions:  
-1.Factors that influence the success of an app,    
-2.Which categories are highly installed    
-3.What are the most famous applications and do they have any trends in common like number of installs, number of reviews, size or android-version? and etc  
-
-These analysis inturn will aid the developer community to build successful apps targeting a specific audience.
-
-
-## How are we going to test the hypothesis?
-Since the dataset is dated till 2018.  We are thinking to test it by comparing the predictions of our model with the 2019 dataset or the latest dataset. 
-
-
-## Any challenges that we might encounter
-There is a lot of useful information that could have given us more insight into the Play Store market e.g. Demographic data could have offered insights into the rating and number of installs of apps, with respect to different regions,  different cultures and different trends popular to specific age groups. Also, it would have been interesting to see how different global trends affect the usage of the app, for instance, the current pandemic "covid-19" has called for quarantine across the globe and many people, markets and other companies are relying on smart phones and virtual connections, this will heavily increase the use of many applications, thus deviating from the general trend. 
+#Conclusion
 
 
 # References
