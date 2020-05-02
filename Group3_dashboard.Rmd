@@ -303,7 +303,7 @@ server <- function(input, output, session) {
   #Plot for comparing model fit
   output$compare_models <-  plotly::renderPlotly({
     clean_play_store %>%
-      ggplot(aes(x = log10(input$x_inp) ^ 2, y = rating)) +
+      ggplot(aes(x = log10(installs) ^ 2, y = rating)) +
       geom_jitter(na.rm = TRUE,color =  custom_cols("blueish green"),alpha = .4) +
       geom_smooth(method = "rpart",se = FALSE,aes(color = "orange"),na.rm = TRUE) +
       geom_smooth(method = "loess",se = FALSE,aes(color = "red"),na.rm = TRUE) +

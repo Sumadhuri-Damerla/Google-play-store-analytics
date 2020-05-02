@@ -10,7 +10,7 @@ output:
     toc_depth: '2'
 ---
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=10, fig.height=8,echo=FALSE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(fig.width=8, fig.height=5,echo=FALSE, warning=FALSE, message=FALSE)
 ```
 
 # Introduction to the dataset  
@@ -57,7 +57,8 @@ require(GGally) #for correlation plot
 theme_set(theme_light())
 library(rpart)
 set.seed(123)
-
+library(moderndive)
+library(ggpubr)
 ```
 
 ```{r custom-color-pallete}
@@ -126,7 +127,8 @@ scale_fill <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) 
 ```
 
 ```{r loading-data}
-clean_play_store <- read_csv("data/tidyplaystore.csv") #read_csv returns a dataframe
+clean_play_store <-
+  read_csv("data/tidyplaystore.csv") #read_csv returns a dataframe
 ```
 
 # Exploratory Data Analysis to find factors for success of an app
@@ -139,13 +141,15 @@ Generally, the most successful apps have high ratings and high installs.To look 
 clean_play_store %>%
   ggplot(aes(x = rating)) +
   geom_density(aes(fill = factor(types)), alpha = 0.5) + #types correspond to paid/free
-  labs(title = "Density plot",
-       subtitle = "App Rating grouped by types",
-       y = "Values",
-       x = "Rating",
-       caption = "Source: google play store dataset",
-       fill = "#Types") +
-   theme(axis.text.x = element_text(vjust=0.5))
+  labs(
+    title = "Density plot",
+    subtitle = "App Rating grouped by types",
+    y = "Values",
+    x = "Rating",
+    caption = "Source: google play store dataset",
+    fill = "#Types"
+  ) +
+  theme(axis.text.x = element_text(vjust = 0.5))
 ```
 
 + We can observe that the number of apps with low ratings are less in number, and most apps have a ratings between 3-5.
@@ -153,63 +157,53 @@ clean_play_store %>%
 First, we plot correlograms of ratings versus different columns to find any relationship. Correlograms are useful to understand the relationship between different numerical variables. If the correlogram index is 1, it means that the variables are directly proportional to each other.  
 
 ## Correlogram plots 
-### Rating vs Reviews  
-````{r rating-reviews-plot}
-clean_play_store$Reviews <- log(clean_play_store$reviews) #transforming the reviews value to logarithmic values
+````{r correlogram-plot, out.width="50%", fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
+clean_play_store$Reviews <-
+  log(clean_play_store$reviews) #transforming the reviews value to logarithmic values
 
 clean_play_store %>%
   select(rating, Reviews) %>%
-  ggpairs(
-          mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Rating vs Reviews",
-       caption = "Source: google play store dataset") 
-```
+  ggpairs(mapping = ggplot2::aes(color = "types")) +
+  labs(subtitle = "Rating vs Reviews",
+       caption = "Source: google play store dataset")
 
-### Rating vs Size
-````{r rating-size-plot}
 clean_play_store %>%
   select(rating, size_mb) %>%
-  ggpairs(
-          mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Rating vs Size (MB)",
-        caption = "Source: google play store dataset") 
-```
+  ggpairs(mapping = ggplot2::aes(color = "types")) +
+  labs(subtitle = "Rating vs Size (MB)",
+       caption = "Source: google play store dataset")
 
-### Rating vs Installs
-````{r rating-installs-plot}
-clean_play_store$Installs <- log(clean_play_store$installs) #transforming the installs values to logarithmic values
+clean_play_store$Installs <-
+  log(clean_play_store$installs) #transforming the installs values to logarithmic values
 
 clean_play_store %>%
   select(rating, Installs) %>%
   ggpairs(mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Rating vs Installs",
+  labs(subtitle = "Rating vs Installs",
        caption = "Source: google play store dataset")
-```
 
-### Rating vs Price
-````{r rating-price-plot}
-clean_play_store$Price <- log(clean_play_store$price) #transforming the price value to logarithmic values
+
+clean_play_store$Price <-
+  log(clean_play_store$price) #transforming the price value to logarithmic values
 
 clean_play_store %>%
   select(rating, Price) %>%
   ggpairs(mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Rating vs Price",
+  labs(subtitle = "Rating vs Price",
        caption = "Source: google play store dataset")
+ 
+
 ```
 
-### Rating vs Types  
-````{r rating-types-plot}
-clean_play_store$types <- as.factor(clean_play_store$types) #changing the types column to factor
+```{r correlogram_type,out.width="50%", fig.width=3, fig.height=3,fig.show='hold'}
+
+clean_play_store$types <-
+  as.factor(clean_play_store$types) #changing the types column to factor
 
 clean_play_store %>%
   select(rating, types) %>%
   ggpairs(mapping = ggplot2::aes(color = "types")) +
-  labs(title = "Correlogram",
-       subtitle = "Rating vs Types",
+  labs(subtitle = "Rating vs Types",
        caption = "Source: google play store dataset")
 ```
 
@@ -225,13 +219,15 @@ ggplot(data = clean_play_store) +
   geom_point(mapping = aes(x = rating, y = reviews, col = types)) +
   scale_color(palette = "hot") +
   scale_y_continuous(trans = 'log10', labels = scales::comma) +
-  labs(title = "Dot plot",
-       subtitle = "Android App Ratings vs Number of Reviews",
-       x = "Rating from 1 to 5 stars",
-       y = "Number of Reviews",
-       caption = "Source: google play store dataset",
-       fill = "Types") +
- theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10))
+  labs(
+    title = "Dot plot",
+    subtitle = "Android App Ratings vs Number of Reviews",
+    x = "Rating from 1 to 5 stars",
+    y = "Number of Reviews",
+    caption = "Source: google play store dataset",
+    fill = "Types"
+  ) +
+  theme(legend.title = element_text(hjust = 0.5, face = "bold", size = 10))
 ```
 
 
@@ -244,17 +240,19 @@ We now explore other factors that might potentially influence rating
 To check the relationship between category and rating, we plotted a box plot with rating on y-axis and category on x-axis.   
 ```{r rating-category-plot}
 clean_play_store %>%
-  ggplot(aes(x = reorder(category,rating), y = rating))+
+  ggplot(aes(x = reorder(category, rating), y = rating)) +
   geom_boxplot(aes(fill = category)) +
   scale_fill(palette = "main") +
-  labs(title = "Boxplot",
-       subtitle = "Android App Ratings by category",
-       x = "Category",
-       y = "Rating",
-       caption = "Source: google play store dataset") +
-   theme(axis.text.x = element_text(angle = 90),
-         legend.position = "None") +
-    coord_flip()
+  labs(
+    title = "Boxplot",
+    subtitle = "Android App Ratings by category",
+    x = "Category",
+    y = "Rating",
+    caption = "Source: google play store dataset"
+  ) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "None") +
+  coord_flip()
 ```
 
 **Finding:** This graph shows that for some categories like TOOLS, FAMILY, FINANCE and LIFESTYLE a great majority of applications fall below first quartile. Thus, even though median rating is high, deviation from median is significant.
@@ -265,16 +263,33 @@ Here we look at the distribution of rating across different categories. We chose
 
 ```{r avg-rating-distributionplot}
 # Distribution of rating for 8 categories with the largest numbers of apps
-clean_play_store %>% 
- filter( category == c("FAMILY", "GAME", "TOOLS","MEDICAL", " BUSINESS", "PRODUCTIVITY", "FINANCE", "COMMUNICATION", "SPORTS")) %>% 
+clean_play_store %>%
+  filter(
+    category == c(
+      "FAMILY",
+      "GAME",
+      "TOOLS",
+      "MEDICAL",
+      " BUSINESS",
+      "PRODUCTIVITY",
+      "FINANCE",
+      "COMMUNICATION",
+      "SPORTS"
+    )
+  ) %>%
   ggplot(aes(x = rating)) +
-  geom_bar(fill = custom_cols("blueish green"), na.rm = TRUE) + 
-  facet_wrap(~category,  ncol = 4, nrow = 4,  shrink = TRUE) +
-  labs(title = "Facet plot",
-       subtitle = "Distribution of rating for 8 categories with the highest numbers of apps",
-       x = "Rating",
-       y = "Count",
-       caption = "Source: google play store dataset")
+  geom_bar(fill = custom_cols("blueish green"), na.rm = TRUE) +
+  facet_wrap( ~ category,
+              ncol = 4,
+              nrow = 4,
+              shrink = TRUE) +
+  labs(
+    title = "Facet plot",
+    subtitle = "Distribution of rating for 8 categories with the highest numbers of apps",
+    x = "Rating",
+    y = "Count",
+    caption = "Source: google play store dataset"
+  )
 ```
 
 **Finding:** The distribution of rating varies significantly across each category.  
@@ -284,20 +299,22 @@ In previous graph we observed that distribution of rating as per category varies
 
 ```{r avgrating-categoryplot}
 # Average rating per category
-clean_play_store %>% 
-  select(c("category", "rating")) %>% 
-  group_by(category) %>% 
-  summarise(rating = mean(rating, na.rm = TRUE)) %>% 
-  ggplot(aes(x = reorder(category, - rating) , rating)) + 
+clean_play_store %>%
+  select(c("category", "rating")) %>%
+  group_by(category) %>%
+  summarise(rating = mean(rating, na.rm = TRUE)) %>%
+  ggplot(aes(x = reorder(category,-rating) , rating)) +
   geom_col(width = 0.5, fill = custom_cols("sky blue")) +
   ggtitle("Average Rating Per Category") +
-  labs(title = "Bar Chart",
-       subtitle = "Average Rating Per Category",
-       y = "Rating", 
-       x = "Category",
-      caption = "Source: google play store dataset") +
+  labs(
+    title = "Bar Chart",
+    subtitle = "Average Rating Per Category",
+    y = "Rating",
+    x = "Category",
+    caption = "Source: google play store dataset"
+  ) +
   theme(axis.text.x = element_text(angle = 90),
-        legend.position = "none" )
+        legend.position = "none")
 ```
 
 **Finding:** This graph shows that the average rating per category is not very different. Still the "EVENTS" category has the highest average rating, and "DATING" category has the least average rating. 
@@ -305,16 +322,23 @@ clean_play_store %>%
 ### Size and rating  
 Size is an important aspect, and we want to see the relationship between size and rating of an application. 
 ```{r size-rating-plot}
-plot <- clean_play_store %>% 
-  ggplot(aes(x = size_mb, y = rating, na.rm = TRUE)) + 
-  geom_point(color = custom_cols("blueish green"),na.rm = TRUE) +
-  labs(title = "Marginal Plot",
-       subtitle = "Size Vs Rating",
-       y = "Rating", 
-       x = "Size (MB)",
-      caption = "Source: google play store dataset") 
+plot <- clean_play_store %>%
+  ggplot(aes(x = size_mb, y = rating, na.rm = TRUE)) +
+  geom_point(color = custom_cols("blueish green"), na.rm = TRUE) +
+  labs(
+    title = "Marginal Plot",
+    subtitle = "Size Vs Rating",
+    y = "Rating",
+    x = "Size (MB)",
+    caption = "Source: google play store dataset"
+  )
 
- ggMarginal(plot, type = "histogram", fill = custom_cols("blueish green"), alpha = 0.6)
+ggMarginal(
+  plot,
+  type = "histogram",
+  fill = custom_cols("blueish green"),
+  alpha = 0.6
+)
 ```
 
 **Finding:** We can see that majority of applications with their sizes under 25 MB, have a good rating(4).
@@ -323,20 +347,24 @@ plot <- clean_play_store %>%
 ## Installs column in depth   
 ### Number of installs per category
 ```{r installs-percategory}
-clean_play_store%>%
+clean_play_store %>%
   count(category, installs, types) %>%
   group_by(category, types) %>%
-  summarize(
-    totalInstalls = sum(as.numeric(installs))
-  ) %>%
-  ggplot(aes(x = reorder(category, totalInstalls), y = log(totalInstalls), fill = types)) +
-  geom_bar(width = 0.5,stat = "identity") +
+  summarize(totalInstalls = sum(as.numeric(installs))) %>%
+  ggplot(aes(
+    x = reorder(category, totalInstalls),
+    y = log(totalInstalls),
+    fill = types
+  )) +
+  geom_bar(width = 0.5, stat = "identity") +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Bar Chart",
-       subtitle = "Number of Installs per Category",
-       x = "Category",
-       y = "Number of Installs(log)",
-       caption = "Source: google play store dataset") +
+  labs(
+    title = "Bar Chart",
+    subtitle = "Number of Installs per Category",
+    x = "Category",
+    y = "Number of Installs(log)",
+    caption = "Source: google play store dataset"
+  ) +
   scale_fill(palette = "main") +
   theme(axis.text.x = element_text(angle = 90)) +
   coord_flip()
@@ -348,21 +376,27 @@ clean_play_store%>%
 Top 10 categories with greatest number of installs. 
 
 ```{r top10-installed-categories}
-clean_play_store%>%
+clean_play_store %>%
   count(category, installs) %>%
   group_by(category) %>%
-  summarize(
-    totalInstalls = sum(as.numeric(installs))
-  ) %>%
+  summarize(totalInstalls = sum(as.numeric(installs))) %>%
   arrange(-totalInstalls) %>%
   head(10) %>%
-  ggplot(aes(x = reorder(category, -totalInstalls), y = totalInstalls, fill = custom_cols("red"))) +
-  geom_bar(width = 0.5, fill = custom_cols("blueish green"), stat = "identity") +
-  labs(title = "Bar Chart",
-       subtitle = "Top 10 Installed Categories",
-       x = "Category",
-       y = "Number of Installs",
-       caption = "Source: google play store dataset") +
+  ggplot(aes(
+    x = reorder(category,-totalInstalls),
+    y = totalInstalls,
+    fill = custom_cols("red")
+  )) +
+  geom_bar(width = 0.5,
+           fill = custom_cols("blueish green"),
+           stat = "identity") +
+  labs(
+    title = "Bar Chart",
+    subtitle = "Top 10 Installed Categories",
+    x = "Category",
+    y = "Number of Installs",
+    caption = "Source: google play store dataset"
+  ) +
   scale_y_continuous(labels = scales::comma) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
         legend.position = "None") +
@@ -373,21 +407,23 @@ clean_play_store%>%
 
 ### 10 least installed categories
 ```{r bottom10-installed-categories}
-clean_play_store%>%
+clean_play_store %>%
   count(category, installs) %>%
   group_by(category) %>%
-  summarize(
-    totalInstalls = sum(as.numeric(installs))
-  ) %>%
+  summarize(totalInstalls = sum(as.numeric(installs))) %>%
   arrange(-totalInstalls) %>%
   tail(10) %>%
   ggplot(aes(x = reorder(category, totalInstalls), y = totalInstalls)) +
-  geom_bar(width = 0.5, fill = custom_cols("vermillion"), stat = "identity") +
-  labs(title = "Bar Chart",
-       subtitle = "10 Least Installed Categories",
-       x = "Category",
-       y = "Number of Installs",
-       caption = "Source: google play store dataset") +
+  geom_bar(width = 0.5,
+           fill = custom_cols("vermillion"),
+           stat = "identity") +
+  labs(
+    title = "Bar Chart",
+    subtitle = "10 Least Installed Categories",
+    x = "Category",
+    y = "Number of Installs",
+    caption = "Source: google play store dataset"
+  ) +
   scale_y_continuous(labels = scales::comma) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
         legend.position = "None") +
@@ -405,13 +441,17 @@ clean_play_store %>%
   summarize(totalInstalls = sum(installs)) %>%
   arrange(desc(totalInstalls)) %>%
   head(10) %>%
-  ggplot(aes(x = reorder(category, -totalInstalls) , y = totalInstalls)) +
-  geom_bar( fill = custom_cols("blueish green"), stat = "identity", width = 0.5) +
-  labs(title = "Bar Chart",
-       subtitle = "Top 10 Paid Categories",
-       x = "Category",
-       y = "Number of Installs",
-       caption = "Source: google play store dataset") +
+  ggplot(aes(x = reorder(category,-totalInstalls) , y = totalInstalls)) +
+  geom_bar(fill = custom_cols("blueish green"),
+           stat = "identity",
+           width = 0.5) +
+  labs(
+    title = "Bar Chart",
+    subtitle = "Top 10 Paid Categories",
+    x = "Category",
+    y = "Number of Installs",
+    caption = "Source: google play store dataset"
+  ) +
   scale_y_continuous(labels = scales::comma) +
   theme(axis.text.x = element_text(angle = 65, vjust = 0.5),
         legend.position = "None") 
@@ -422,16 +462,25 @@ clean_play_store %>%
 ### Size Vs. number of installs    
 Size is an important characteristic of an application. Large applications might reduce the number of installs, as it reduces to targeted audience. We can test this by plotting size against installs. 
 ```{r size-installs-plot}
-plot <- clean_play_store %>% 
-  filter(!is.na(size_mb) ) %>% 
-  ggplot(aes(x = size_mb, y = log(installs + 0.005), na.rm = TRUE)) + 
-  geom_point(color = custom_cols("vermillion"), na.rm = TRUE) + 
-  labs(title = "Marginal Plot",
-       subtitle = "Size Vs Number of Installs",
-       y = "No. of Installs (Log)", 
-       x = "Size (MB)",
-      caption = "Source: google play store dataset")
-  ggMarginal(plot, type = "histogram", fill = custom_cols("vermillion"), alpha = 0.6)
+plot <- clean_play_store %>%
+  filter(!is.na(size_mb)) %>%
+  ggplot(aes(
+    x = size_mb,
+    y = log(installs + 0.005),
+    na.rm = TRUE
+  )) +
+  geom_point(color = custom_cols("vermillion"), na.rm = TRUE) +
+  labs(
+    title = "Marginal Plot",
+    subtitle = "Size Vs Number of Installs",
+    y = "No. of Installs (Log)",
+    x = "Size (MB)",
+    caption = "Source: google play store dataset"
+  )
+ggMarginal(plot,
+           type = "histogram",
+           fill = custom_cols("vermillion"),
+           alpha = 0.6)
 ```
 
 **Finding:** Optimally sized Applications, with sizes between 5MB and 30MB, gets the greatest number of installs. 
@@ -440,16 +489,22 @@ plot <- clean_play_store %>%
 ### Number of installs based on support by minimum android version
 ```{r android_ver,warning=FALSE,message=FALSE}
 clean_play_store %>%
-  ggplot(aes(x = min_android_ver, fill = types )) +
-  geom_bar(width = .5, alpha = 0.7, na.rm = TRUE) +
-  labs(title = "Bar Chart",
-       subtitle = "Installs Based on Min. Android Version",
-       x = "Min. Android Version",
-       y = "Count",
-       caption = "Source: google play store dataset",
-       fill = "Types") +
- theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10),
-       axis.text.x = element_text(angle = 90))
+  ggplot(aes(x = min_android_ver, fill = types)) +
+  geom_bar(width = .5,
+           alpha = 0.7,
+           na.rm = TRUE) +
+  labs(
+    title = "Bar Chart",
+    subtitle = "Installs Based on Min. Android Version",
+    x = "Min. Android Version",
+    y = "Count",
+    caption = "Source: google play store dataset",
+    fill = "Types"
+  ) +
+  theme(
+    legend.title = element_text(hjust = 0.5, face = "bold", size = 10),
+    axis.text.x = element_text(angle = 90)
+  )
 ```
 
 **Finding:** 4.1 android version has the maximum number of installs.
@@ -465,7 +520,7 @@ clean_play_store %>%
 
 # Future work (models)  
 ## What are we trying to achieve (thesis/hypothesis)
-The dataset we have contains information about 10000 apps dated till 2018. With the dataset, we plan on using Clustering Model, Forecast Model and Random Forest to perform predictive analysis. We want to answer the following hypothesis:  
+The dataset we have contains information about 10000 apps dated till 2018. With the dataset, we plan on using Linear Regression Model, Recursive Partitioning Model and Random Forest to perform predictive analysis. We want to answer the following hypothesis:  
 
 1) Find similarities in apps that make it to the top of Play Store. Factors contributing to the success of applications.
 2) Can we predict rating of apps based on other parameters such as number of reviews or the size of an app?
@@ -490,107 +545,73 @@ Since the dataset is dated till 2018.  We are thinking to test it by comparing t
 There is a lot of useful information that could have given us more insight into the Play Store market e.g. Demographic data could have offered insights into the rating and number of installs of apps, with respect to different regions,  different cultures and different trends popular to specific age groups. Also, it would have been interesting to see how different global trends affect the usage of the app, for instance, the current pandemic "covid-19" has called for quarantine across the globe and many people, markets and other companies are relying on smart phones and virtual connections, this will heavily increase the use of many applications, thus deviating from the general trend. 
 
 # Model
-In this section we will try to fit models for both explanatory and predictive purpose. We will choose between two different models by using the cross validation technique.  We will choose the model that best fits our data and use it to predict rating for a dummy app.
+ + Our main goal is to predict rating of an app based on different parameters. Our EDA confirms that variables like number of installs, number of reviews, category of the app and the type of app (paid/free) highly affect the rating of an app.  
 
-## Correlation between different variables
-Before creating a model, we will investigate the Correlation between various variables. It will give us an idea which variables to choose as exploratory variables.
-```{r }
+ + In this section, we try to fit both explanatory and predictive models. We used the cross validation technique to select the best fitting model for our dataset and lastly, we test the models by predicting ratings for a dummy app.
+
+## Correlation using Pearson method
+Before creating a model, we will investigate the correlation between different variables to help select the exploratory variables.
+```{r correlation_rating_installs}
 # Finding Correlation between rating and installs
-cor.test(clean_play_store$installs, clean_play_store$rating , method = "pearson")
-
-# Finding Correlation between rating and log10(installs)
-cor.test( log10(clean_play_store$installs), clean_play_store$rating , method = "pearson")
+knitr::knit_print(cor.test(clean_play_store$installs, clean_play_store$rating , method = "pearson"))
 
 # Finding Correlation between rating and log10(installs)^2
-cor.test( log10(clean_play_store$installs)^2, clean_play_store$rating , method = "pearson")
+knitr::knit_print(cor.test(log10(clean_play_store$installs)^2, clean_play_store$rating , method = "pearson"))
+```
+ + **Correlation coefficient between rating and installs**: The correlation coefficient is 0.0402. Using the square of log transform of the installs variable increased the correlation coefficient to 0.1138. This indicates that there is a slight positive relation between the variables which can also be observed in the graphs (given in the next section) where the blue line indicates the best fitted Local Regression model and the red line shows a Recursive Partitioning model.
 
+ 
+```{r correlation_rating_reviews}
 # Finding Correlation between rating and reviews
-cor.test( clean_play_store$reviews, clean_play_store$rating , method = "pearson")
-
-# Finding Correlation between rating and log10(reviews)
-cor.test( log10(clean_play_store$reviews), clean_play_store$rating , method = "pearson")
+knitr::knit_print(cor.test(clean_play_store$reviews, clean_play_store$rating , method = "pearson"))
 
 # Finding Correlation between rating and log10(reviews)^2
-cor.test( log10(clean_play_store$reviews)^2, clean_play_store$rating , method = "pearson")
+knitr::knit_print(cor.test(log10(clean_play_store$reviews)^2, clean_play_store$rating , method = "pearson"))
 
 ```
- + Correlation coefficient between rating and installs: The correlation coefficient here is 0.0402. By taking a log transform of the installs variable we increase the correlation to 0.1138. It means that there is a slight positive relation between these two variables. This can also be observed in the graphs (given in the next section). The blue line indicates the best fitted Local Regression model, while the red line shows a Recursive Partitioning model.
- + Correlation coefficient between rating and reviews: The correlation coefficient here is 0.05515. By taking log transformation of installs, and squaring it, we increased the correlation to .20308. The graph below is evident of this fact.
-
+ + **Correlation coefficient between rating and reviews**: The correlation coefficient is 0.05515. Using the square of log transform of the installs variable increased the correlation coefficient to .20308.
+ 
 ## Explanatory/Descriptive modeling
-Here we seek to discover the underlaying relationships between the data. 
-The following models are used: 
- + lm
- + loess 
- + rpart 
+* The following models are used: 
+ + Linear Regression Model
+ + Local Regression Model
+ + Recursive Partitioning Model
 
-```{r descriptive_modeling_1, warning=FALSE,message=FALSE}
-
-library(moderndive)
-library(ggpubr)
-
+```{r descriptive_modeling_1, warning=FALSE, message=FALSE}
 # Turn off scientific notation 
 options(scipen = 999) 
 
 
-# Creating a jitter plot: log10(installs) vs rating
+jitterPlot <- function(x.var){
+
 clean_play_store %>% 
-  ggplot(aes(x = log10(installs)^2, y = rating)) + 
+  ggplot(aes_string(x = x.var, y = "rating")) + 
+    scale_x_log10() +
   geom_jitter(na.rm = TRUE, color =  custom_cols("blueish green"), alpha = .4) + 
   geom_smooth(method = "rpart", se = FALSE, aes(color = "orange"), na.rm = TRUE) + 
   geom_smooth(method = "loess", se = FALSE, aes(color ="red"), na.rm = TRUE) + 
   geom_smooth(method = "lm", se = FALSE, aes(color = "blue"), na.rm = TRUE) +
   labs(title = "Jitter Plot",
-       subtitle = "log10(installs)^2 vs rating",
-       x = "Log10(Installs)^2",
+       subtitle = paste (x.var,"vs Rating", collapse = " "),
+       x = x.var,
        y = "Rating",
        caption = "Source: google play store dataset") +
  theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10)) + 
  scale_color_manual(name = 'Models', 
-         values =c("orange"="orange","red"="red", "blue" = "blue", "vermillion"), labels = c("Linear Regression Model", "Recursive Partitioning Model",  "Local Regression Model", " " ))
-
-# Creating a jitter plot: size_mb vs rating
-clean_play_store %>% 
-  ggplot(aes(x = log10(size_mb), y = rating ) ) + 
-  geom_jitter(na.rm = TRUE, color =  custom_cols("blueish green"), alpha = .4) +
-  geom_smooth(method = "rpart", se = FALSE, aes(color = "orange"), na.rm = TRUE) + 
-  geom_smooth(method = "loess", se = FALSE, aes(color ="red"), na.rm = TRUE) + 
-  geom_smooth(method = "lm", se = FALSE, aes(color = "blue"), na.rm = TRUE) +
-  labs(title = "Jitter Plot",
-       subtitle = "log10(installs)^2 vs rating",
-       x = "Log10(Installs)^2",
-       y = "Rating",
-       caption = "Source: google play store dataset") +
- theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10)) + 
- scale_color_manual(name = 'Models', 
-         values =c("orange"="orange","red"="red", "blue" = "blue", "vermillion"), labels = c("Linear Regression Model", "Recursive Partitioning Model",  "Local Regression Model", " " ))
+         values =c("orange"="orange","red"="red", "blue" = "blue", "vermillion"), labels = c("Linear Regression Model", "Recursive Partitioning Model",  "Local Regression Model"))
+}
 
 
-# Creating a jitter plot: log10(reviews) vs rating
-clean_play_store %>% 
-  ggplot(aes(x = log10(reviews)^2, y = rating )) + 
-  geom_jitter(na.rm = TRUE, color =  custom_cols("blueish green"), alpha = .4) +
-  geom_smooth(method = "rpart", se = FALSE, aes(color = "orange"), na.rm = TRUE) + 
-  geom_smooth(method = "loess", se = FALSE, aes(color ="red"), na.rm = TRUE) + 
-  geom_smooth(method = "lm", se = FALSE, aes(color = "blue"), na.rm = TRUE) +
-  labs(title = "Jitter Plot",
-       subtitle = "log10(installs)^2 vs rating",
-       x = "Log10(Installs)^2",
-       y = "Rating",
-       caption = "Source: google play store dataset") +
- theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10)) + 
- scale_color_manual(name = 'Models', 
-         values =c("orange"="orange","red"="red", "blue" = "blue", "vermillion"), labels = c("Linear Regression Model", "Recursive Partitioning Model",  "Local Regression Model", " " ))
-
-
-
+jitterPlot("installs") # Creating a jitter plot: installs vs rating
+jitterPlot("size_mb") # Creating a jitter plot: size_mb vs rating
+jitterPlot("reviews") # Creating a jitter plot: reviews vs rating
 ```
-The above graphs show the fitted Linear Regression model, Local Regression model and Recursive Partitioning model for different variables from our dataset. 
+The above graphs show the fitted Linear Regression model, Local Regression model and Recursive Partitioning model for predicting rating using number of installs, size of the app and number of reviews variables. 
 
 
 ## Explanatory/Descriptive modeling (cont.) 
-Continuing with our explanatory modeling we will fit a model for rating vs installs given taking into consideration whether the app is Free or Paid. Continuing with our explanatory modeling we will fit a model for rating vs installs given taking into consideration whether the app is Free or Paid. We have also calculated sum of square residuals, R-Square value and Root Mean Square Error for the model. 
-```{r descriptive_modeling_2, warning=FALSE,message=FALSE}
+Continuing with our explanatory modeling we will fit a model for rating vs installs given taking into consideration whether the app is Free or Paid.  We have also calculated sum of square residuals, R-Square value and Root Mean Square Error for the model. 
+```{r descriptive_modeling_2}
 
 # Fitting a lm model
 model_rat_instl <- lm(rating ~ installs + types + category + reviews, data = clean_play_store)
@@ -599,6 +620,7 @@ model_rat_instl <- lm(rating ~ installs + types + category + reviews, data = cle
 # Getting Regression points table
 points_table <- get_regression_points(model_rat_instl)
   
+points_table
 
 # Fitting a model taking into consideration the type of app(Free or Paid)
 points_table %>% 
@@ -627,13 +649,13 @@ points_table %>%
 
 
 ```
-Observations/Findings: We observed that the rating of paid applications is much higher than the free apps. Which might be indicate its better quality. On the other hand, Free apps have a higher number of installs, thus covering a wide range of 
+**Observations/Findings**: We observed that the rating of paid applications is much higher than the free apps. Which might be indicate its better quality. On the other hand, Free apps have a higher number of installs, thus covering a wide range of 
 audience.
 
 
 
 ## Cross Validation of models
-Choosing the model that gives us the least root mean square error. We will make a comparison between lm and rpart, and try to find which model provides the best analysis for our data 
+This technique helps us identify the best fit model for our dataset i.e. the model with least root mean square error
 ```{r cross_validation, warning=FALSE,message=FALSE}
 
 # Spliting our dataset into two dattasets i.e. train(75%) and test(25%) 
@@ -663,8 +685,10 @@ RMSE_lm
 RMSE_rpart
 
 ```
-We sliced the dataset into training and test dataset. Training data det contain 6951 observations (75% of total) and test data set contains 2198 observations (25% of total). We trained both lm model and rpart model with the training dataset. After training the model we predicted the rating values for test dataset. In order to find which model did a better job of predicting the value of rating we calculated the root mean square error (RMSE) for the predictions made by both models. RMSE values for lm and rpart are 0.5476666 and 0.5399403 respectively. We can see that RMSE value for rpart is less than RMSE value for lm, implying that rpart can make a better prediction than lm. 
-Along with performing a comparison between lm and rpart, we experimented with different explanatory variables. We got the least RMSE by using installs, types, categories and reviews as explanatory variables. 
+ + We sliced the dataset into training and test dataset. Training data det contain 6951 observations (75% of total) and test data set contains 2198 observations (25% of total). 
+ + We trained both lm model and rpart model with the training dataset.
+ + After training the model we predicted the rating values for test dataset. In order to find which model did a better job of predicting the value of rating, we calculated the root mean square error (RMSE) for the predictions made by both models. RMSE values for lm and rpart are 0.5476666 and 0.5399403 respectively. We can see that RMSE value for rpart is less than RMSE value for lm, implying that rpart can make a better prediction than lm. 
+ + Along with performing a comparison between lm and rpart, we experimented with different explanatory variables. We got the least RMSE by using installs, types, categories and reviews as explanatory variables. 
 
 
 ## Making Predictions 
@@ -684,8 +708,8 @@ predicted_rating_rpart_2 <- predict(model_rpart_rat_inst, newdata = predict_app_
 predicted_rating_rpart_2
 
 ```
- + 1st dummy application: First dummy application of type Free with 1 billion installs and 100000 reviews, belonging to TOOLS category has a predicted rating of 4.2884. This seems like a reasonable prediction A Free app with 1 billion installs and 100,000 reviews must be a popular app and is expected to have high rating. But the fact that it belongs to "Tools" category, which has the third least average rating, its rating is not exceptionally high. Its rating much better than average (4.17) but is not among the highest ratings.
- + 2nd dummy application: Second dummy application is of type Free, with 1000 installs and 100 reviews, belonging to EVENTS category, has a predicted rating of 4.0436. This seems like a reasonable prediction. A free app is expected to have higher installs, but as this app does not have high number of installs, indicating that the app is not the best in its segment or it has limited relevance or utility, thus we can expect low rating. But, as it belongs to EVENTS category, which has the highest average rating among all categories, its rating is not among the worst. It has a below average rating but is still not among the wort rated apps. 
+ + **1st dummy application**: First dummy application of type Free with 1 billion installs and 100000 reviews, belonging to TOOLS category has a predicted rating of 4.2884. This seems like a reasonable prediction A Free app with 1 billion installs and 100,000 reviews must be a popular app and is expected to have high rating. But the fact that it belongs to "Tools" category, which has the third least average rating, its rating is not exceptionally high. Its rating much better than average (4.17) but is not among the highest ratings.
+ + **2nd dummy application**: Second dummy application is of type Free, with 1000 installs and 100 reviews, belonging to EVENTS category, has a predicted rating of 4.0436. This seems like a reasonable prediction. A free app is expected to have higher installs, but as this app does not have high number of installs, indicating that the app is not the best in its segment or it has limited relevance or utility, thus we can expect low rating. But, as it belongs to EVENTS category, which has the highest average rating among all categories, its rating is not among the worst. It has a below average rating but is still not among the wort rated apps. 
 
 # Conclusion
 
@@ -696,8 +720,8 @@ predicted_rating_rpart_2
 [2] [R markdown](https://bookdown.org/yihui/rmarkdown/html-document.html#tabbed-sections) ;  
 [3] [Stackoverflow](https://stackoverflow.com/questions/3993301/how-to-format-number-values-for-ggplot2-legend/15007117) ;  
 [4] [GGally](https://ggobi.github.io/ggally/rd.html#ggpairs);  
-[5] [Custom color pallete](https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2);  
-[6] [Tidying data](https://medium.com/coinmonks/dealing-with-missing-data-using-r-3ae428da2d17);  
+[5] [Custom color pallete](https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2);   
+[6]
 [7] [Colors](https://hbr.org/2014/04/the-right-colors-make-data-easier-to-read);  
 [8] [TidyVerse](https://www.tidyverse.org/);  
 [9] [ggplot2](https://ggplot2.tidyverse.org/reference/);  
