@@ -494,7 +494,7 @@ In this section we will try to fit models for both explanatory and predictive pu
 
 ## Correlation between different variables
 Before creating a model, we will investigate the Correlation between various variables. It will give us an idea which variables to choose as exploratory variables.
-```{r}
+```{r }
 # Finding Correlation between rating and installs
 cor.test(clean_play_store$installs, clean_play_store$rating , method = "pearson")
 
@@ -686,8 +686,6 @@ predicted_rating_rpart_2
 ```
  + 1st dummy application: First dummy application of type Free with 1 billion installs and 100000 reviews, belonging to TOOLS category has a predicted rating of 4.2884. This seems like a reasonable prediction A Free app with 1 billion installs and 100,000 reviews must be a popular app and is expected to have high rating. But the fact that it belongs to "Tools" category, which has the third least average rating, its rating is not exceptionally high. Its rating much better than average (4.17) but is not among the highest ratings.
  + 2nd dummy application: Second dummy application is of type Free, with 1000 installs and 100 reviews, belonging to EVENTS category, has a predicted rating of 4.0436. This seems like a reasonable prediction. A free app is expected to have higher installs, but as this app does not have high number of installs, indicating that the app is not the best in its segment or it has limited relevance or utility, thus we can expect low rating. But, as it belongs to EVENTS category, which has the highest average rating among all categories, its rating is not among the worst. It has a below average rating but is still not among the wort rated apps. 
-
-
 
 # Conclusion
 

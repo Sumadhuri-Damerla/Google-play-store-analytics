@@ -21,6 +21,8 @@ library(wordcloud2)
 library(shinythemes)
 library(rpart)
 set.seed(123)
+library(moderndive)
+library(ggpubr)
 
 ```
 
@@ -132,30 +134,6 @@ create_wordcloud <-
 ```{r ui-code}
 ui <- navbarPage(
   title = "Google Play Store Analytics",
-  tabPanel("Data",
-           sidebarLayout(
-             sidebarPanel(
-               radioButtons(
-                 'disp',
-                 'Display',
-                 c(
-                   "Preview" = "preview",
-                   "Structure" = "str",
-                   "Summary" = "summary"
-                 ),
-                 selected = "preview",
-                 inline = TRUE
-               )
-             ),
-             mainPanel(tabsetPanel(
-               tabPanel(
-                 'View',
-                 h4(textOutput("selected")),
-                 verbatimTextOutput('dt_selected'),
-                 htmlOutput('data_info')
-               )
-             ))
-           )),
   tabPanel("Visualise",
            sidebarLayout(
              sidebarPanel(
@@ -166,15 +144,15 @@ ui <- navbarPage(
                  max = 5,
                  value = c(0, 5)
                ),
-               sliderInput('nb_categories', 'Select No. of Categories', 5, 26, 1),
+               sliderInput('nb_categories', 'Select No. of Categories', 1, 35, 1),
                selectInput('content_rating', 'Select Content Rating', c(
                  "All", unique(clean_play_store$content_rating)
                ))
              ),
              mainPanel(tabsetPanel(
                # CODE BELOW: Add a plotly output named "plot_top_categories"
-               tabPanel('Plot', plotly::plotlyOutput('plot_top_categories')),
-               tabPanel('Table', DT::DTOutput('dt_top_categories')),
+               tabPanel('Plot',"Top installed categories", plotly::plotlyOutput('plot_top_categories')),
+               tabPanel('Table', "Top installed categories",DT::DTOutput('dt_top_categories')),
                tabPanel(
                  "Word Cloud" ,
                  "Wordcloud of different categories having the maximum number of apps",
@@ -182,6 +160,7 @@ ui <- navbarPage(
                )
              ))
            )),
+  navbarMenu("Models",
     tabPanel(
       "Predict rating of your app",
       sidebarLayout(
@@ -197,48 +176,29 @@ ui <- navbarPage(
                          "Free")
         ),
         mainPanel(
-          h3(textOutput('rating_predict')),
+          h3(textOutput('rating_predict'))
+          )
+      )
+    ),
+    tabPanel("Compare models",
+              sidebarLayout(
+        sidebarPanel(
+          selectInput('model', 'Choose model', c("Linear Regression", "Recursive partitioning")),
+          selectInput('x_inp', 'X axis',c("reviews","installs","size_mb") )
+        ),
+        mainPanel(
           h3(textOutput('heading_model')),
           plotly::plotlyOutput('compare_models')
           )
       )
-    )
+             )
+  )
 )
 ```
 
 
 ```{r server-code}
 server <- function(input, output, session) {
-  #----Data--------------------------------------------------------------------------
-  #to render text
-  output$selected <- renderText({
-    switch(
-      input$disp,
-      preview = paste("Data preview (10 of rows shown).See view-tab for more details"),
-      str = paste("Structure of data"),
-      summary = paste("Summary of data")
-    )
-  })
-  #To render table
-  output$dt_selected <- renderPrint({
-    switch(
-      input$disp,
-      preview = clean_play_store %>% tail(10),
-      str = str(clean_play_store),
-      summary = summary(clean_play_store)
-    )
-  })
-  #To render UI
-  output$data_info <- renderUI({
-    str2 <-
-      paste(
-        "The data source used for this analysis is the *2018 google play store*(https://www.kaggle.com/lava18/google-play-store-apps) collected from Kaggle."
-      )
-    HTML(paste(str2))
-    
-  })
-  
-  
   #-----EDA----------------------------------------------------------------
   # CODE BELOW: Add a reactive expression named `rval_top_categories` that
   # filters `` for the selected content_rating and top categories
@@ -249,7 +209,7 @@ server <- function(input, output, session) {
         filter(content_rating == input$content_rating)
     }
     temp_df %>%
-      filter(rating %in% input$rating[1]:input$rating[2]) %>%
+      #filter(rating %in% input$rating[1]:input$rating[2]) %>%
       count(category, installs, types) %>%
       group_by(category, types) %>%
       summarize(totalInstalls = sum(as.numeric(installs))) %>%
@@ -323,17 +283,27 @@ server <- function(input, output, session) {
       )
     predicted_rating <- predict(res_model, newdata = predict_data)
     paste("Estimated rating of your app:", predicted_rating)
-    
   })
   
    output$heading_model <- renderText({
     paste("Comparing model fit:")
+     
   })
+   
+   output$model_table <- renderTable({
+    
+     if (input$model == "Linear Regression") {
+      res_model <-
+        lm(rating ~ installs + types + category + reviews, data = clean_play_store)
+    }
+     get_regression_points(res_model) %>%
+       head(10)
+})
   
   #Plot for comparing model fit
   output$compare_models <-  plotly::renderPlotly({
     clean_play_store %>%
-      ggplot(aes(x = log10(installs) ^ 2, y = rating)) +
+      ggplot(aes(x = log10(input$x_inp) ^ 2, y = rating)) +
       geom_jitter(na.rm = TRUE,color =  custom_cols("blueish green"),alpha = .4) +
       geom_smooth(method = "rpart",se = FALSE,aes(color = "orange"),na.rm = TRUE) +
       geom_smooth(method = "loess",se = FALSE,aes(color = "red"),na.rm = TRUE) +
