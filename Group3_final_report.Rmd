@@ -1,16 +1,27 @@
 ---
 author: "Sumadhuri Damerla,Shaoor Jan,Ashjan Khan"
-subtitle: Final Report
 output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '2'
   pdf_document:
     df_print: paged
     fig_caption: yes
     number_sections: yes
     toc: yes
     toc_depth: '2'
+subtitle: Final Report
 ---
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=8, fig.height=5,echo=FALSE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(
+  fig.width = 8,
+  fig.height = 5,
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
 ```
 
 # Introduction to the dataset  
@@ -54,11 +65,11 @@ library(dplyr)
 library(stringr)
 require(ggExtra) # For marginal graphs
 require(GGally) #for correlation plot
-theme_set(theme_light())
 library(rpart)
-set.seed(123)
 library(moderndive)
 library(ggpubr)
+theme_set(theme_light())
+set.seed(123)
 ```
 
 ```{r custom-color-pallete}
@@ -97,33 +108,44 @@ custom_palettes <- list(
   `grey`  = custom_cols("light grey", "dark grey")
 )
 
-custom_pal <- function(palette = "main", reverse = FALSE, ...) {
+custom_pal <- function(palette = "main",
+                       reverse = FALSE,
+                       ...) {
   pal <- custom_palettes[[palette]]
   
-  if (reverse) pal <- rev(pal)
+  if (reverse)
+    pal <- rev(pal)
   
   colorRampPalette(pal, ...)
 }
 
-scale_color <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
-  pal <- custom_pal(palette = palette, reverse = reverse)
-  
-  if (discrete) {
-    discrete_scale("colour", paste0("drsimonj_", palette), palette = pal, ...)
-  } else {
-    scale_color_gradientn(colours = pal(256), ...)
+scale_color <-
+  function(palette = "main",
+           discrete = TRUE,
+           reverse = FALSE,
+           ...) {
+    pal <- custom_pal(palette = palette, reverse = reverse)
+    
+    if (discrete) {
+      discrete_scale("colour", paste0("drsimonj_", palette), palette = pal, ...)
+    } else {
+      scale_color_gradientn(colours = pal(256), ...)
+    }
   }
-}
 
-scale_fill <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
-  pal <- custom_pal(palette = palette, reverse = reverse)
-  
-  if (discrete) {
-    discrete_scale("fill", paste0("drsimonj_", palette), palette = pal, ...)
-  } else {
-    scale_fill_gradientn(colours = pal(256), ...)
+scale_fill <-
+  function(palette = "main",
+           discrete = TRUE,
+           reverse = FALSE,
+           ...) {
+    pal <- custom_pal(palette = palette, reverse = reverse)
+    
+    if (discrete) {
+      discrete_scale("fill", paste0("drsimonj_", palette), palette = pal, ...)
+    } else {
+      scale_fill_gradientn(colours = pal(256), ...)
+    }
   }
-}
 ```
 
 ```{r loading-data}
@@ -191,11 +213,12 @@ clean_play_store %>%
   ggpairs(mapping = ggplot2::aes(color = "types")) +
   labs(subtitle = "Rating vs Price",
        caption = "Source: google play store dataset")
- 
+
 
 ```
 
 ```{r correlogram_type,out.width="50%", fig.width=3, fig.height=3,fig.show='hold'}
+
 
 clean_play_store$types <-
   as.factor(clean_play_store$types) #changing the types column to factor
@@ -279,10 +302,10 @@ clean_play_store %>%
   ) %>%
   ggplot(aes(x = rating)) +
   geom_bar(fill = custom_cols("blueish green"), na.rm = TRUE) +
-  facet_wrap( ~ category,
-              ncol = 4,
-              nrow = 4,
-              shrink = TRUE) +
+  facet_wrap(~ category,
+             ncol = 4,
+             nrow = 4,
+             shrink = TRUE) +
   labs(
     title = "Facet plot",
     subtitle = "Distribution of rating for 8 categories with the highest numbers of apps",
@@ -303,7 +326,7 @@ clean_play_store %>%
   select(c("category", "rating")) %>%
   group_by(category) %>%
   summarise(rating = mean(rating, na.rm = TRUE)) %>%
-  ggplot(aes(x = reorder(category,-rating) , rating)) +
+  ggplot(aes(x = reorder(category, -rating) , rating)) +
   geom_col(width = 0.5, fill = custom_cols("sky blue")) +
   ggtitle("Average Rating Per Category") +
   labs(
@@ -352,7 +375,7 @@ clean_play_store %>%
   group_by(category, types) %>%
   summarize(totalInstalls = sum(as.numeric(installs))) %>%
   ggplot(aes(
-    x = reorder(category, -totalInstalls),
+    x = reorder(category, totalInstalls),
     y = log(totalInstalls),
     fill = types
   )) +
@@ -383,7 +406,7 @@ clean_play_store %>%
   arrange(-totalInstalls) %>%
   head(10) %>%
   ggplot(aes(
-    x = reorder(category,-totalInstalls),
+    x = reorder(category, -totalInstalls),
     y = totalInstalls,
     fill = custom_cols("red")
   )) +
@@ -441,7 +464,7 @@ clean_play_store %>%
   summarize(totalInstalls = sum(installs)) %>%
   arrange(desc(totalInstalls)) %>%
   head(10) %>%
-  ggplot(aes(x = reorder(category,-totalInstalls) , y = totalInstalls)) +
+  ggplot(aes(x = reorder(category, -totalInstalls) , y = totalInstalls)) +
   geom_bar(fill = custom_cols("blueish green"),
            stat = "identity",
            width = 0.5) +
@@ -545,31 +568,70 @@ Since the dataset is dated till 2018.  We are thinking to test it by comparing t
 There is a lot of useful information that could have given us more insight into the Play Store market e.g. Demographic data could have offered insights into the rating and number of installs of apps, with respect to different regions,  different cultures and different trends popular to specific age groups. Also, it would have been interesting to see how different global trends affect the usage of the app, for instance, the current pandemic "covid-19" has called for quarantine across the globe and many people, markets and other companies are relying on smart phones and virtual connections, this will heavily increase the use of many applications, thus deviating from the general trend. 
 
 # Model
- + Our main goal is to predict rating of an app based on different parameters. Our EDA confirms that variables like number of installs, number of reviews, category of the app and the type of app (paid/free) highly affect the rating of an app.  
++ Our main goal is to predict rating of an app based on different parameters. Our EDA confirms that variables like number of installs, number of reviews, category of the app and the type of app (paid/free) highly affect the rating of an app.  
 
- + In this section, we try to fit both explanatory and predictive models. We used the cross validation technique to select the best fitting model for our dataset and lastly, we test the models by predicting ratings for a dummy app.
+ + In this section, we tied to fit both explanatory and predictive models. We used the cross-validation technique to select the best fitting model for our dataset and lastly, we test the models by predicting ratings for a dummy app.
 
 ## Correlation using Pearson method
-Before creating a model, we will investigate the correlation between different variables to help select the exploratory variables.
+Before creating a model, we calculated the correlation between different variables to help us select appropriate exploratory variables.
 ```{r correlation_rating_installs}
 # Finding Correlation between rating and installs
-knitr::knit_print(cor.test(clean_play_store$installs, clean_play_store$rating , method = "pearson"))
+
+cor_rat_ins <- cor(
+  clean_play_store$installs,
+  clean_play_store$rating,
+  use = "complete.obs" ,
+  method = "pearson"
+)
+names (cor_rat_ins) <- "Rating and Installs"
+
 
 # Finding Correlation between rating and log10(installs)^2
-knitr::knit_print(cor.test(log10(clean_play_store$installs)^2, clean_play_store$rating , method = "pearson"))
+cor_rat_ins_transformed <- cor(
+  log10(clean_play_store$installs) ^ 2,
+  clean_play_store$rating ,
+  use = "complete.obs",
+  method = "pearson"
+)
+
+names(cor_rat_ins_transformed) <- "Rating and Installs(transformed)"
+
+# print out both values
+knitr::knit_print(cor_rat_ins)
+knitr::knit_print(cor_rat_ins_transformed)
+
 ```
- + **Correlation coefficient between rating and installs**: The correlation coefficient is 0.0402. Using the square of log transform of the installs variable increased the correlation coefficient to 0.1138. This indicates that there is a slight positive relation between the variables which can also be observed in the graphs (given in the next section) where the blue line indicates the best fitted Local Regression model and the red line shows a Recursive Partitioning model.
+ + **Correlation coefficient between rating and installs**: The correlation coefficient is 0.0402. This indicates a slight positive relation between these two variables. Using square of log of installs, increased the correlation coefficient to 0.1138.
 
  
 ```{r correlation_rating_reviews}
+
 # Finding Correlation between rating and reviews
-knitr::knit_print(cor.test(clean_play_store$reviews, clean_play_store$rating , method = "pearson"))
+cor_rat_rev <- cor(
+  clean_play_store$reviews,
+  clean_play_store$rating,
+  use = "complete.obs",
+  method = "pearson"
+)
+
+names(cor_rat_rev) <- "Rating and Reviews"
 
 # Finding Correlation between rating and log10(reviews)^2
-knitr::knit_print(cor.test(log10(clean_play_store$reviews)^2, clean_play_store$rating , method = "pearson"))
+cor_rat_rev_transformed <- cor(
+  log10(clean_play_store$reviews) ^ 2,
+  clean_play_store$rating ,
+  use = "complete.obs",
+  method = "pearson"
+)
+
+names(cor_rat_rev_transformed) <- "Rating and Reviews(transformed)"
+
+# print out both values
+knitr::knit_print(cor_rat_rev)
+knitr::knit_print(cor_rat_rev_transformed)
 
 ```
- + **Correlation coefficient between rating and reviews**: The correlation coefficient is 0.05515. Using the square of log transform of the installs variable increased the correlation coefficient to .20308.
+ + **Correlation coefficient between rating and reviews**: The correlation coefficient is 0.05515, indicating a slight positive relationship between the two variables. Using square of log of installs, increased the correlation coefficient to 0.20308.
  
 ## Explanatory/Descriptive modeling
 * The following models are used: 
@@ -578,35 +640,78 @@ knitr::knit_print(cor.test(log10(clean_play_store$reviews)^2, clean_play_store$r
  + Recursive Partitioning Model
 
 ```{r descriptive_modeling_1, warning=FALSE, message=FALSE}
-# Turn off scientific notation 
-options(scipen = 999) 
+# Turn off scientific notation
+options(scipen = 999)
 
-
-jitterPlot <- function(x.var){
-
-clean_play_store %>% 
-  ggplot(aes_string(x = x.var, y = "rating")) + 
+# Function for creating jitter plot
+jitterPlot <- function(x_var) {
+  if (x_var == "installs") {
+    x_axis_label <- "Log10(Installs)^2"
+    var_selected <- log10(clean_play_store$installs) ^ 2
+    
+  } else if (x_var == "size_mb") {
+    x_axis_label <- "Log10(Size)^2"
+    var_selected <- log10(clean_play_store$size_mb)
+    
+  } else if (x_var == "reviews") {
+    x_axis_label <- "Log10(Reviews)^2"
+    var_selected <- log10(clean_play_store$reviews) ^ 2
+  }
+  
+  clean_play_store %>%
+    ggplot(aes_string(x = var_selected, y = "rating")) +
     scale_x_log10() +
-  geom_jitter(na.rm = TRUE, color =  custom_cols("blueish green"), alpha = .4) + 
-  geom_smooth(method = "rpart", se = FALSE, aes(color = "orange"), na.rm = TRUE) + 
-  geom_smooth(method = "loess", se = FALSE, aes(color ="red"), na.rm = TRUE) + 
-  geom_smooth(method = "lm", se = FALSE, aes(color = "blue"), na.rm = TRUE) +
-  labs(title = "Jitter Plot",
-       subtitle = paste (x.var,"vs Rating", collapse = " "),
-       x = x.var,
-       y = "Rating",
-       caption = "Source: google play store dataset") +
- theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10)) + 
- scale_color_manual(name = 'Models', 
-         values =c("orange"="orange","red"="red", "blue" = "blue", "vermillion"), labels = c("Linear Regression Model", "Recursive Partitioning Model",  "Local Regression Model"))
+    geom_jitter(na.rm = TRUE,
+                color =  custom_cols("blueish green"),
+                alpha = .4) +
+    geom_smooth(
+      method = "rpart",
+      se = FALSE,
+      aes(color = "orange"),
+      na.rm = TRUE
+    ) +
+    geom_smooth(method = "loess",
+                se = FALSE,
+                aes(color = "red"),
+                na.rm = TRUE) +
+    geom_smooth(method = "lm",
+                se = FALSE,
+                aes(color = "blue"),
+                na.rm = TRUE) +
+    labs(
+      title = "Jitter Plot",
+      subtitle = paste (x_axis_label, "vs Rating", collapse = " "),
+      x = x_axis_label,
+      y = "Rating",
+      caption = "Source: google play store dataset"
+    ) +
+    theme(legend.title = element_text(
+      hjust = 0.5,
+      face = "bold",
+      size = 10
+    )) +
+    scale_color_manual(
+      name = 'Models',
+      values = c(
+        "orange" = "orange",
+        "red" = "red",
+        "blue" = "blue",
+        "vermillion"
+      ),
+      labels = c(
+        "Linear Regression Model",
+        "Recursive Partitioning Model",
+        "Local Regression Model"
+      )
+    )
 }
-
 
 jitterPlot("installs") # Creating a jitter plot: installs vs rating
 jitterPlot("size_mb") # Creating a jitter plot: size_mb vs rating
 jitterPlot("reviews") # Creating a jitter plot: reviews vs rating
 ```
-The above graphs show the fitted Linear Regression model, Local Regression model and Recursive Partitioning model for predicting rating using number of installs, size of the app and number of reviews variables. 
+
+The graphs above show the fitted Linear Regression model, Local Regression model and Recursive Partitioning model for predicting rating using number of installs, size of the app and number of reviews variables. 
 
 
 ## Explanatory/Descriptive modeling (cont.) 
@@ -614,81 +719,88 @@ Continuing with our explanatory modeling we will fit a model for rating vs insta
 ```{r descriptive_modeling_2}
 
 # Fitting a lm model
-model_rat_instl <- lm(rating ~ installs + types + category + reviews, data = clean_play_store)
+model_rat_instl <-
+  lm(rating ~ installs + types + category + reviews, data = clean_play_store)
 
 
 # Getting Regression points table
 points_table <- get_regression_points(model_rat_instl)
-  
+
 points_table
 
 # Fitting a model taking into consideration the type of app(Free or Paid)
-points_table %>% 
+points_table %>%
   ggplot(aes(x = log10(installs + .0005), y = rating)) +
-  geom_jitter(na.rm = TRUE, color =  custom_cols("sky blue"), alpha = .4) +
-  geom_smooth( aes(color = types), method = "lm", se = FALSE) +
-  labs(title = "Jitter Plot",
-       subtitle = "Log10(Installs) vs Rating",
-       x = "Log10(Installs)",
-       y = "Rating",
-       color ="Types",
-       caption = "Source: google play store dataset") +
- theme(legend.title = element_text(hjust = 0.5, face="bold", size = 10))
+  geom_jitter(na.rm = TRUE,
+              color =  custom_cols("sky blue"),
+              alpha = .4) +
+  geom_smooth(aes(color = types), method = "lm", se = FALSE) +
+  labs(
+    title = "Jitter Plot",
+    subtitle = "Log10(Installs) vs Rating",
+    x = "Log10(Installs)",
+    y = "Rating",
+    color = "Types",
+    caption = "Source: google play store dataset"
+  ) +
+  theme(legend.title = element_text(hjust = 0.5, face = "bold", size = 10))
 
-# Calculating Sum of Square residuals  
-points_table %>% 
-  summarise(square = sum(residual^2 )) 
+# Calculating Sum of Square residuals
+points_table %>%
+  summarise(square = sum(residual ^ 2))
 
 # Calculating R-Squared to values
-points_table %>% 
+points_table %>%
   summarise(r_squared = 1 - var(residual) / var(rating))
 
 # Calculating RMSE
-points_table %>% 
-  summarise(RMSE = sqrt(mean(residual^2) ))
-
+points_table %>%
+  summarise(RMSE = sqrt(mean(residual ^ 2)))
 
 ```
-**Observations/Findings**: We observed that the rating of paid applications is much higher than the free apps. Which might be indicate its better quality. On the other hand, Free apps have a higher number of installs, thus covering a wide range of 
-audience.
+**Observations/Findings**: We observed that the rating of paid apps is higher than the free apps, indicating better quality of paid apps. On the other hand, Free apps have a higher number of installs, thus covering a wide range of audience.
 
 
 
 ## Cross Validation of models
-This technique helps us identify the best fit model for our dataset i.e. the model with least root mean square error
+This technique helps us identify the best fit model for our dataset i.e. model with the least root mean square error
 ```{r cross_validation, warning=FALSE,message=FALSE}
 
-# Spliting our dataset into two dattasets i.e. train(75%) and test(25%) 
+# Spliting our dataset into two dattasets i.e. train(75%) and test(25%)
 smp_size <- floor(0.75 * nrow(clean_play_store))
 
-train_ind <- sample(seq_len(nrow(clean_play_store)), size = smp_size)
-train <- clean_play_store[train_ind, ]
-test <- clean_play_store[-train_ind, ]
+train_ind <-
+  sample(seq_len(nrow(clean_play_store)), size = smp_size)
+train <- clean_play_store[train_ind,]
+test <- clean_play_store[-train_ind,]
 
 # Fitting our models, Linear Regression model and Recursive Partitioning model
-model_lm_rat_instl <- lm(rating ~ installs + types + category + reviews, data = train)
-model_rpart_rat_inst <- rpart(rating ~ installs + types + category + reviews , data = train)
+model_lm_rat_instl <-
+  lm(rating ~ installs + types + category + reviews, data = train)
+model_rpart_rat_inst <-
+  rpart(rating ~ installs + types + category + reviews , data = train)
 
 # Predicting rating for test dataset
 predicted_rating_lm <- predict(model_lm_rat_instl, newdata = test)
-predicted_rating_rpart <- predict(model_rpart_rat_inst, newdata = test)
+predicted_rating_rpart <-
+  predict(model_rpart_rat_inst, newdata = test)
 
 # Calculating error
 error_lm <- test$rating - predicted_rating_lm
 error_rpart <- test$rating - predicted_rating_rpart
 
 # Calculating Root Mean Square Error
-RMSE_lm <- sqrt(mean(error_lm^2, na.rm = TRUE) )
-RMSE_rpart <- sqrt(mean(error_rpart^2, na.rm = TRUE) )
+RMSE_lm <- sqrt(mean(error_lm ^ 2, na.rm = TRUE))
+RMSE_rpart <- sqrt(mean(error_rpart ^ 2, na.rm = TRUE))
 
 RMSE_lm
 RMSE_rpart
 
 ```
- + We sliced the dataset into training and test dataset. Training data det contain 6951 observations (75% of total) and test data set contains 2198 observations (25% of total). 
- + We trained both lm model and rpart model with the training dataset.
- + After training the model we predicted the rating values for test dataset. In order to find which model did a better job of predicting the value of rating, we calculated the root mean square error (RMSE) for the predictions made by both models. RMSE values for lm and rpart are 0.5476666 and 0.5399403 respectively. We can see that RMSE value for rpart is less than RMSE value for lm, implying that rpart can make a better prediction than lm. 
- + Along with performing a comparison between lm and rpart, we experimented with different explanatory variables. We got the least RMSE by using installs, types, categories and reviews as explanatory variables. 
++ We sliced the dataset into training and test datasets. Training dataset contain 6,951 observations (75% of total) and test data set contains 2,198 observations (25% of total). 
+ + We trained both Linear Regression model (lm) and Recursive Partitioning model (rpart) with the training dataset.
+ + After training our model we predicted the rating for test dataset. In order to find which model fir better, we calculated the root mean square error (RMSE) for both models. RMSE values for Linear Regression model and Recursive Partitioning model are 0.5277467 and 0.5183104 respectively. We can see that RMSE value for Recursive Partitioning model is less than RMSE value for Linear Regression model, implying that Recursive Partitioning model can make a better prediction than Linear Regression model. 
+ + Along with performing a comparison between Linear Regression model and Recursive Partitioning model, we experimented with different explanatory variables for each model. We got the least RMSE by using installs, types, categories and reviews as explanatory variables.
 
 
 ## Making Predictions 
@@ -696,22 +808,38 @@ We can predict rating of a dummy app by entering different parameters like insta
 ```{r predictive_modeling, warning=FALSE,message=FALSE}
 
 #  Pridicting rating based on: installs=1000000000, types=Free, category=Tools, reviews=100000
-predict_app_1 <- data.frame("installs" = 1000000000, "types" = "Free", "category" = "TOOLS", reviews = 100000)
+predict_app_1 <-
+  data.frame(
+    "installs" = 1000000000,
+    "types" = "Free",
+    "category" = "TOOLS",
+    reviews = 100000
+  )
 
-predicted_rating_rpart_1 <- predict(model_rpart_rat_inst, newdata = predict_app_1)
+predicted_rating_rpart_1 <-
+  predict(model_rpart_rat_inst, newdata = predict_app_1)
 predicted_rating_rpart_1
 
 
 #  Pridicting rating based on: installs=1000, types=Free, category=EVENTS, reviews=100
-predict_app_2 <- data.frame("installs" = 1000, "types" = "Free", "category" = "EVENTS", reviews = 100)
-predicted_rating_rpart_2 <- predict(model_rpart_rat_inst, newdata = predict_app_2)
+predict_app_2 <-
+  data.frame(
+    "installs" = 1000,
+    "types" = "Free",
+    "category" = "EVENTS",
+    reviews = 100
+  )
+predicted_rating_rpart_2 <-
+  predict(model_rpart_rat_inst, newdata = predict_app_2)
 predicted_rating_rpart_2
 
 ```
- + **1st dummy application**: First dummy application of type Free with 1 billion installs and 100000 reviews, belonging to TOOLS category has a predicted rating of 4.2884. This seems like a reasonable prediction A Free app with 1 billion installs and 100,000 reviews must be a popular app and is expected to have high rating. But the fact that it belongs to "Tools" category, which has the third least average rating, its rating is not exceptionally high. Its rating much better than average (4.17) but is not among the highest ratings.
- + **2nd dummy application**: Second dummy application is of type Free, with 1000 installs and 100 reviews, belonging to EVENTS category, has a predicted rating of 4.0436. This seems like a reasonable prediction. A free app is expected to have higher installs, but as this app does not have high number of installs, indicating that the app is not the best in its segment or it has limited relevance or utility, thus we can expect low rating. But, as it belongs to EVENTS category, which has the highest average rating among all categories, its rating is not among the worst. It has a below average rating but is still not among the wort rated apps. 
+ + **1st dummy application**: First dummy application of type Free with 1 billion installs and 100000 reviews, belonging to TOOLS category has a predicted rating of 4.2853. This to be a reasonable prediction A Free app with 1 billion installs and 100,000 reviews must be a popular app and is expected to have high rating. But the fact that it belongs to "Tools" category, which has the third least average rating, its rating is not exceptionally high. Its rating is much better than average (4.17) but is not among the highest ratings.
+ + **2nd dummy application**: Second dummy application is of type Free, with 1000 installs and 100 reviews, belonging to EVENTS category, has a predicted rating of 4.1313. This seems to be a reasonable prediction. A free app is expected to have higher installs, but as this app does not have high number of installs, indicating that the app is not the best in its segment or it has limited relevance or utility, thus we can expect low rating. But, as it belongs to EVENTS category, which has the highest average rating among all categories, its rating is not among the worst. It has a below average rating but is still not among the wort rated apps. 
 
 # Conclusion
+
+
 
 
 # References
