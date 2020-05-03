@@ -1,0 +1,393 @@
+---
+title: "Google play store analytics"
+output: html_document
+runtime: shiny
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=10, fig.height=8,echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+```{r load-libraries}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+require(ggExtra) # For marginal graphs
+require(GGally) #for correlation plot
+library(shiny)
+library(wordcloud2)
+library(shinythemes)
+library(rpart)
+set.seed(123)
+library(moderndive)
+library(ggpubr)
+library(plotly)
+
+```
+
+```{r loading-data}
+clean_play_store <- read_csv("data/tidyplaystore.csv") #read_csv returns a dataframe
+```
+
+```{r custom-color-pallete}
+# reference: https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2
+
+custom_colors <- c(
+  `red`             = "#d11141",
+  `blueish green`   = "#009E73",
+  `blue`            = "#0072B2",
+  `sky blue`        = "#56B4E9",
+  `orange`          = "#E69F00",
+  `vermillion`      = "#D55E00",
+  `yellow`          = "#009E73",
+  `grey`            = "#999999",
+  `reddish purple`  = "#CC79A7"
+)
+
+custom_cols <- function(...) {
+  cols <- c(...)
+  
+  if (is.null(cols))
+    return (custom_colors)
+  
+  custom_colors[cols]
+}
+
+custom_palettes <- list(
+  `main`  = custom_cols("blue", "green", "yellow"),
+  
+  `cool`  = custom_cols("blue", "green"),
+  
+  `hot`   = custom_cols("yellow", "orange", "red"),
+  
+  `mixed` = custom_cols("blue", "green", "yellow", "orange", "red"),
+  
+  `grey`  = custom_cols("light grey", "dark grey")
+)
+
+custom_pal <- function(palette = "main", reverse = FALSE, ...) {
+  pal <- custom_palettes[[palette]]
+  
+  if (reverse) pal <- rev(pal)
+  
+  colorRampPalette(pal, ...)
+}
+
+scale_color <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- custom_pal(palette = palette, reverse = reverse)
+  
+  if (discrete) {
+    discrete_scale("colour", paste0("drsimonj_", palette), palette = pal, ...)
+  } else {
+    scale_color_gradientn(colours = pal(256), ...)
+  }
+}
+
+scale_fill <- function(palette = "main", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- custom_pal(palette = palette, reverse = reverse)
+  
+  if (discrete) {
+    discrete_scale("fill", paste0("drsimonj_", palette), palette = pal, ...)
+  } else {
+    scale_fill_gradientn(colours = pal(256), ...)
+  }
+}
+```
+
+
+```{r functions for dashboard}
+library(tm)
+library(tmap)
+create_wordcloud <-
+  function(data,
+           num_words = 100,
+           background = "white") {
+    # If text is provided, convert it to a dataframe of word frequencies
+    if (is.character(data)) {
+      corpus <- Corpus(VectorSource(data))
+      corpus <- tm_map(corpus, tolower)
+      corpus <- tm_map(corpus, removePunctuation)
+      corpus <- tm_map(corpus, removeNumbers)
+      corpus <- tm_map(corpus, removeWords, stopwords("english"))
+      tdm <- as.matrix(TermDocumentMatrix(corpus))
+      data <- sort(rowSums(tdm), decreasing = TRUE)
+      data <- data.frame(word = names(data), freq = as.numeric(data))
+    }
+    
+    # Make sure a proper num_words is provided
+    if (!is.numeric(num_words) || num_words < 3) {
+      num_words <- 3
+    }
+    
+    # Grab the top n most common words
+    data <- head(data, n = num_words)
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    
+    wordcloud2(data, backgroundColor = background)
+  }
+```
+
+
+```{r ui-code}
+ui <- navbarPage(
+  title = "Google Play Store Analytics",
+  tabPanel("Visualise",
+           sidebarLayout(
+             sidebarPanel(
+               sliderInput(
+                 'rating',
+                 "Select Rating",
+                 min = 0,
+                 max = 5,
+                 value = c(0, 5)
+               ),
+               sliderInput('nb_categories', 'Select No. of Categories', 1, 35, 1),
+               selectInput('content_rating', 'Select Content Rating', c(
+                 "All", unique(clean_play_store$content_rating)
+               ))
+             ),
+             mainPanel(tabsetPanel(
+               # CODE BELOW: Add a plotly output named "plot_top_categories"
+               tabPanel('Plot',"Top installed categories", plotly::plotlyOutput('plot_top_categories')),
+               tabPanel('Table', "Top installed categories",DT::DTOutput('dt_top_categories')),
+               tabPanel(
+                 "Word Cloud" ,
+                 "Wordcloud of different categories having the maximum number of apps",
+                 wordcloud2Output(outputId = "cloud")
+               )
+             ))
+           )),
+  
+  navbarMenu("Models",
+    tabPanel(
+      "Predict rating of your app",
+      sidebarLayout(
+        sidebarPanel(
+          selectInput('model', 'Choose model', c("Linear Regression", "Recursive partitioning")),
+          numericInput('reviews', 'Number of reviews',value = 1000, min = 0),
+          numericInput(
+            'installs',
+            'Number of installs',value = 1000,
+            min = 0),
+          selectInput('category', 'Category', unique(clean_play_store$category)),
+          radioButtons('types', 'Paid/Free', c("Free", "Paid"), selected =
+                         "Free")
+        ),
+        mainPanel(
+          h3(textOutput('rating_predict'))
+          )
+      )
+    ),
+    tabPanel("Compare models",
+              sidebarLayout(
+        sidebarPanel(
+          h3(textOutput("Choose Model")),
+          radioButtons('radio_btn', "Select Model", 
+                       c("Linear Regression" = 1 ,
+                         "Recursive partitioning" = 2 ,
+                         "Local Regression"  = 3),
+                       ),
+          selectInput('x_inp', 'X axis',c("Reviews","Installs","Size(MB)") )
+        ),
+        mainPanel(
+          h3(textOutput('heading_model')),
+          plotly::plotlyOutput('compare_models'),
+          
+        #  h3(textOutput('compare_models'))
+          )
+      )
+             )
+  )
+)
+```
+
+
+```{r server-code}
+server <- function(input, output, session) {
+  #-----EDA----------------------------------------------------------------
+  # CODE BELOW: Add a reactive expression named `rval_top_categories` that
+  # filters `` for the selected content_rating and top categories
+  rval_top_categories <- reactive({
+    temp_df <- clean_play_store
+    if (input$content_rating != "All") {
+      temp_df <- temp_df %>%
+        filter(content_rating == input$content_rating)
+    }
+    temp_df %>%
+      #filter(rating %in% input$rating[1]:input$rating[2]) %>%
+      count(category, installs, types) %>%
+      group_by(category, types) %>%
+      summarize(totalInstalls = sum(as.numeric(installs))) %>%
+      arrange(-totalInstalls) %>%
+      head(input$nb_categories)
+  })
+  # CODE BELOW: Render a horizontal bar plot of top categories and
+  #  assign it to an output named plot_top_categories`
+  output$plot_top_categories <- plotly::renderPlotly({
+    rval_top_categories() %>%
+      ggplot(aes(
+        x = reorder(category, -totalInstalls),
+        y = totalInstalls,
+        fill = types
+      )) +
+      geom_bar(width = 0.5, stat = "identity") +
+      labs(
+        title = "Bar Chart",
+        subtitle = "Top 10 Installed Categories",
+        
+        x = "Category",
+        y = "Number of Installs",
+        caption = "Source: google play store dataset"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
+            legend.position = "None") +
+      coord_flip()
+  })
+  
+  output$dt_top_categories <- DT::renderDT({
+    rval_top_categories()
+  })
+  
+  # Render the word cloud and assign it to the output list
+  output$cloud <- renderWordcloud2({
+    if (input$content_rating != "All") {
+      temp_df1 <- clean_play_store %>%
+        filter(content_rating == input$content_rating)
+    }
+    temp_df1 <- clean_play_store %>%
+      filter(rating %in% input$rating[1]:input$rating[2])
+    # Create a word cloud object
+    create_wordcloud(temp_df1$category, num_words = input$nb_categories)
+  })
+  
+  
+  
+  #-----Model-----------------------------------------------------------------
+  output$rating_predict <- renderText({
+      # Split the dataset into training and testing datasets i.e. train(75%) and test(25%)
+    smp_size <- floor(0.75 * nrow(clean_play_store))
+    train_ind <-
+      sample(seq_len(nrow(clean_play_store)), size = smp_size)
+    train <- clean_play_store[train_ind, ]
+    test <- clean_play_store[-train_ind, ]
+    
+    # Fitting our models, Linear Regression model and Recursive Partitioning model
+    if (input$model == "Linear Regression") {
+      res_model <-
+        lm(rating ~ installs + types + category + reviews, data = train)
+    } else if(input$model == "Recursive partitioning"){
+      res_model <-
+        rpart(rating ~ installs + types + category + reviews, data = train)
+    }
+    
+    predict_data <-
+      data.frame(
+        "installs" = input$installs,
+        "types" = input$types,
+        "category" = input$category,
+        "reviews" = input$reviews
+      )
+    predicted_rating <- predict(res_model, newdata = predict_data)
+    paste("Estimated rating of your app:", round(predicted_rating, 4))
+  })
+  
+   output$heading_model <- renderText({
+    paste("Comparing model fit:")
+     
+  })
+   
+   output$model_table <- renderTable({
+    
+     if (input$model == "Linear Regression") {
+      res_model <-
+        lm(rating ~ installs + types + category + reviews, data = clean_play_store)
+    }
+     get_regression_points(res_model) %>%
+       head(10)
+})
+  
+   
+  #-----Model_2-----------------------------------------------------------------
+   
+   
+   
+   
+   
+  #Plot for comparing model 
+  output$compare_models <-  renderPlotly ({
+    
+    
+    
+    
+ if(input$radio_btn == 1){
+   mdl <- "lm"
+
+ } else if (input$radio_btn == 2) {
+
+   mdl <- "rpart"
+
+ } else if (input$radio_btn == 3) {
+
+   mdl <- "loess"
+ }
+    
+    
+    
+    if(input$x_inp == "Reviews"){
+      var_selected <- log10(clean_play_store$reviews)^2
+      
+    } else if (input$x_inp == "Installs") {
+
+   var_selected <- log10(clean_play_store$installs)^2
+
+ } else if (input$x_inp == "Size(MB)") {
+
+   var_selected <- clean_play_store$size_mb
+ }
+    
+    print(
+      ggplotly( clean_play_store %>%
+      ggplot(aes(x = var_selected , y = rating)) +
+      geom_jitter(na.rm = TRUE,color =  custom_cols("blueish green"),alpha = .4, text = paste("ABC", var_selected )) +
+      geom_smooth(method = mdl,se = FALSE,color = "blue",na.rm = TRUE) +
+      labs(
+        title = "Jitter Plot",
+        subtitle = paste("log10(", input$x_inp ,")^2 vs rating"),
+        x = paste("Log10(", input$x_inp ,")^2"),
+        y = "Rating",
+        caption = "Source: google play store dataset"
+      ) +
+      theme(legend.title = element_text(
+        hjust = 0.5,
+        face = "bold",
+        size = 10
+      )) 
+      ),
+      
+       tooltip = c("text", "y")
+      
+       )
+    
+  
+      
+      
+      
+      
+       
+  })
+  
+
+}
+```
+
+
+```{r run app}
+# Run the application
+shinyApp(ui, server, options = list(height = 1080 , width = 1000))
+
+```
