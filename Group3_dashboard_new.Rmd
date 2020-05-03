@@ -208,6 +208,7 @@ ui <- navbarPage(
 
 ```{r server-code}
 server <- function(input, output, session) {
+  
   #-----EDA----------------------------------------------------------------
   # CODE BELOW: Add a reactive expression named `rval_top_categories` that
   # filters `` for the selected content_rating and top categories
@@ -268,6 +269,7 @@ server <- function(input, output, session) {
   
   
   #-----Model-----------------------------------------------------------------
+  
   output$rating_predict <- renderText({
       # Split the dataset into training and testing datasets i.e. train(75%) and test(25%)
     smp_size <- floor(0.75 * nrow(clean_play_store))
@@ -353,7 +355,7 @@ server <- function(input, output, session) {
     print(
       ggplotly( clean_play_store %>%
       ggplot(aes(x = var_selected , y = rating)) +
-      geom_jitter(na.rm = TRUE,color =  custom_cols("blueish green"),alpha = .4, text = paste("ABC", var_selected )) +
+      geom_jitter(na.rm = TRUE,color =  custom_cols("blueish green"),alpha = .4, aes(text = paste("( x-axis: ", round(var_selected, 2), ", y-axis: " ,rating,")" ))) +
       geom_smooth(method = mdl,se = FALSE,color = "blue",na.rm = TRUE) +
       labs(
         title = "Jitter Plot",
@@ -366,10 +368,12 @@ server <- function(input, output, session) {
         hjust = 0.5,
         face = "bold",
         size = 10
-      )) 
-      ),
+      )),
+      tooltip = "text"
       
-       tooltip = c("text", "y")
+      )
+      
+       
       
        )
     
