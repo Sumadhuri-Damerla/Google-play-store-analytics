@@ -352,7 +352,7 @@ clean_play_store %>%
   group_by(category, types) %>%
   summarize(totalInstalls = sum(as.numeric(installs))) %>%
   ggplot(aes(
-    x = reorder(category, totalInstalls),
+    x = reorder(category, -totalInstalls),
     y = log(totalInstalls),
     fill = types
   )) +
