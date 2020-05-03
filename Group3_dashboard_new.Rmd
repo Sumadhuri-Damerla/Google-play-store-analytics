@@ -217,23 +217,28 @@ server <- function(input, output, session) {
     if (input$content_rating != "All") {
       temp_df <- temp_df %>%
         filter(content_rating == input$content_rating)
-    }
+    } 
+    
+    temp_df <- temp_df[temp_df$rating >= input$rating[1] & temp_df$rating<=input$rating[2],] 
     temp_df %>%
-      #filter(rating %in% input$rating[1]:input$rating[2]) %>%
       count(category, installs, types) %>%
       group_by(category, types) %>%
       summarize(totalInstalls = sum(as.numeric(installs))) %>%
       arrange(-totalInstalls) %>%
       head(input$nb_categories)
   })
+  
   # CODE BELOW: Render a horizontal bar plot of top categories and
   #  assign it to an output named plot_top_categories`
   output$plot_top_categories <- plotly::renderPlotly({
-    rval_top_categories() %>%
+   
+    ggplotly(
+     rval_top_categories() %>%
       ggplot(aes(
         x = reorder(category, -totalInstalls),
         y = totalInstalls,
-        fill = types
+        fill = types,
+        text = paste("Category: ", category , "<br> Installs: ", totalInstalls )
       )) +
       geom_bar(width = 0.5, stat = "identity") +
       labs(
@@ -246,8 +251,12 @@ server <- function(input, output, session) {
       ) +
       scale_y_continuous(labels = scales::comma) +
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
-            legend.position = "None") +
-      coord_flip()
+            legend.position = "None") + 
+      coord_flip(),
+     tooltip = "text"
+    )
+    
+    
   })
   
   output$dt_top_categories <- DT::renderDT({
@@ -268,7 +277,7 @@ server <- function(input, output, session) {
   
   
   
-  #-----Model-----------------------------------------------------------------
+  #-----Model Predicting rating-----------------------------------------------------------------
   
   output$rating_predict <- renderText({
       # Split the dataset into training and testing datasets i.e. train(75%) and test(25%)
@@ -295,11 +304,11 @@ server <- function(input, output, session) {
         "reviews" = input$reviews
       )
     predicted_rating <- predict(res_model, newdata = predict_data)
-    paste("Estimated rating of your app:", round(predicted_rating, 4))
+    paste("Predicted Rating: ", round(predicted_rating, 4))
   })
   
    output$heading_model <- renderText({
-    paste("Comparing model fit:")
+    paste("Comparing Models: ")
      
   })
    
@@ -315,77 +324,59 @@ server <- function(input, output, session) {
   
    
   #-----Model_2-----------------------------------------------------------------
-   
-   
-   
-   
-   
   #Plot for comparing model 
   output$compare_models <-  renderPlotly ({
-    
-    
-    
-    
- if(input$radio_btn == 1){
-   mdl <- "lm"
-
- } else if (input$radio_btn == 2) {
-
-   mdl <- "rpart"
-
- } else if (input$radio_btn == 3) {
-
-   mdl <- "loess"
- }
-    
-    
-    
-    if(input$x_inp == "Reviews"){
-      var_selected <- log10(clean_play_store$reviews)^2
       
-    } else if (input$x_inp == "Installs") {
-
-   var_selected <- log10(clean_play_store$installs)^2
-
- } else if (input$x_inp == "Size(MB)") {
-
-   var_selected <- clean_play_store$size_mb
- }
-    
-    print(
-      ggplotly( clean_play_store %>%
-      ggplot(aes(x = var_selected , y = rating)) +
-      geom_jitter(na.rm = TRUE,color =  custom_cols("blueish green"),alpha = .4, aes(text = paste("( x-axis: ", round(var_selected, 2), ", y-axis: " ,rating,")" ))) +
-      geom_smooth(method = mdl,se = FALSE,color = "blue",na.rm = TRUE) +
-      labs(
-        title = "Jitter Plot",
-        subtitle = paste("log10(", input$x_inp ,")^2 vs rating"),
-        x = paste("Log10(", input$x_inp ,")^2"),
-        y = "Rating",
-        caption = "Source: google play store dataset"
-      ) +
-      theme(legend.title = element_text(
-        hjust = 0.5,
-        face = "bold",
-        size = 10
-      )),
-      tooltip = "text"
       
-      )
       
-       
-      
-       )
-    
+  # choosing model 
+   if(input$radio_btn == 1){
+     mdl <- "lm"
   
-      
-      
-      
-      
-       
-  })
+   } else if (input$radio_btn == 2) {
   
-
+     mdl <- "rpart"
+  
+   } else if (input$radio_btn == 3) {
+  
+     mdl <- "loess"
+   }
+      
+  # choosing x-axis 
+  if(input$x_inp == "Reviews"){
+    
+        var_selected <- log10(clean_play_store$reviews)^2
+        
+  } else if (input$x_inp == "Installs") {
+    
+     var_selected <- log10(clean_play_store$installs)^2
+     
+  } else if (input$x_inp == "Size(MB)") {
+  
+     var_selected <- clean_play_store$size_mb
+  }
+      print(
+        ggplotly( clean_play_store %>%
+        ggplot(aes(x = var_selected , y = rating)) +
+        geom_jitter(na.rm = TRUE,color =  custom_cols("blueish green"),alpha = .4, aes(text = paste("( x-axis: ", round(var_selected, 2), ", y-axis: " ,rating,")" ))) +
+        geom_smooth(method = mdl,se = FALSE,color = "blue",na.rm = TRUE) +
+        labs(
+          title = "Jitter Plot",
+          subtitle = paste("log10(", input$x_inp ,")^2 vs rating"),
+          x = paste("Log10(", input$x_inp ,")^2"),
+          y = "Rating",
+          caption = "Source: google play store dataset"
+        ) +
+        theme(legend.title = element_text(
+          hjust = 0.5,
+          face = "bold",
+          size = 10
+        )),
+        tooltip = "text"
+        
+        )
+         )
+    })
 }
 ```
 

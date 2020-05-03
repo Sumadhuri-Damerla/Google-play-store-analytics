@@ -748,6 +748,10 @@ clean_play_store %>%
 
 
 
+
+
+
+
 # Conclusion 
  + For an application to be successful, it has to have maximum number of reviews and maximum number of ratings. Following are the factors that impact the success of an application:  
    * Apps should atleast support android version 4 or more to succeed.This is expected because the majority of users have smart phones with constant android updates.  
