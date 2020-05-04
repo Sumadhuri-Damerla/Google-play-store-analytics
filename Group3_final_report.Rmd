@@ -886,14 +886,209 @@ predict_rating(
  + **1st application**: First dummy application of type Free with 1 billion installs and 100000 reviews, belonging to TOOLS category has a predicted rating of 4.2853. This to be a reasonable prediction A Free app with 1 billion installs and 100,000 reviews must be a popular app and is expected to have high rating. But the fact that it belongs to "Tools" category, which has the third least average rating, its rating is not exceptionally high. Its rating is much better than average (4.17) but is not among the highest ratings.
  
  + **2nd application**: Second dummy application is of type Free, with 1000 installs and 100 reviews, belonging to EVENTS category, has a predicted rating of 4.1313. This seems to be a reasonable prediction. A free app is expected to have higher installs, but as this app does not have high number of installs, indicating that the app is not the best in its segment or it has limited relevance or utility, thus we can expect low rating. But, as it belongs to EVENTS category, which has the highest average rating among all categories, its rating is not among the worst. It has a below average rating but is still not among the wort rated apps. 
+ 
+ 
+ ## **Load data and libraries**
 
-# Conclusion
+```{r warning = FALSE, message = FALSE}
 
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+library(caret)
+library(randomForest)
+google <- clean_play_store
+```
+
+*check the data structure* 
+```{r check-data}
+str(google)
+```
+
+*Lets check the number of _missing values_ per column*
+
+```{r check-na}
+sapply(google, function(x) sum(is.na(x)))
+```
+
+The **Rating** and **max_android_ver**column has a large number of missing values - too many to be imputed with confidence.  
+Running na.omit() leaves us with plenty of data for modelling, so let's make life a bit easier:
+
+```{r omit-na}
+google %<>% na.omit() 
+```
+
+## **Preparing data for machine learning**
+
+### Check that "Reviews" are related to "Installations"
+
+
+Showing that **Reviews** are a good indicator of **Installations**  
+```{r reviews-installations ,echo = F}
+google$Reviews <- as.numeric(google$reviews)
+
+reviews <- google %>% 
+            group_by(installs) %>% 
+            summarise(Avg_reviews = mean(reviews)) %>%
+            arrange(-Avg_reviews)
+            
+knitr::kable(reviews)
+```
+
+### Data transformations
+
+The predictor **Rating** and the outcome variable **Reviews** are 
+highly skewed: 
+
+```{r echo = F}
+hist(google$rating, col = "orange", main = "Rating")
+hist(google$reviews, col = "lightblue", main = "Reviews")
+```
+
+
+
+**Finding:** The raw rating and reviews are highly skewed.
+
++We will transform the data to remove the skewedness. Since reviews are rightly skewed, a log transformation can be applied.As for ratings, we will be applying the powers of 4 to remove the left skewedness. 
+```{r transformation-reviews_ratings}
+google$reviews <- log(google$reviews)
+google$rating <- google$rating^4.1
+hist(google$rating, col = "orange", main  = "Rating transformed")
+hist(google$reviews, col = "lightblue", main = "Reviews transformed")
+
+```
+
+
+
+
+**Finding**-Now that the ratings and reviews are transformed for our model, Lets select category, types, reviews and ratings as the primary features for our model building.Since category and types are categorical variables we will dummify them(convert them to numeric data) to create a uniform analysis of the model.
+
+## Dummify the data & remove zero variance predictors
+```{r dummify-remove-zero-variance}
+#Selecting primary features
+googleML <- google %>% select(category, types, reviews, rating)
+#converting categorical data to numeric data
+googleML$category <- as.factor(googleML$category)
+googleML$types <- as.factor(googleML$types)
+#dummifying variables
+dummy <- dummyVars(" ~ .", googleML)
+googleML <- data.frame(predict(dummy, googleML))
+#Removing zero variance variables(types.paid)
+zero_var <- nearZeroVar(googleML)
+googleML <- googleML[, -zero_var] %>% select(-c(types.Paid))
+```
+
+
+### Prepare the train and test sets
+
+```{r train-test}
+set.seed(100)
+rows <- createDataPartition(googleML$rating, list = F, p = 0.7)
+gTrain <- googleML[rows,]
+gTest <- googleML[-rows,]
+```
+
+## **Random forest model analysis**
+Random forest, like its name implies, consists of a large number of individual decision trees that operate as an ensemble. Each individual tree in the random forest spits out a class prediction and the class with the most votes becomes our model’s prediction.
+The fundamental concept behind random forest is a simple but powerful one — the wisdom of crowds. In data science speak, the reason that the random forest model works so well is:
+A large number of relatively uncorrelated models (trees) operating as a committee will outperform any of the individual constituent models.
+A Random Forest is an ensemble technique capable of performing both regression and classification tasks with the use of multiple decision trees and a technique called Bootstrap Aggregation, commonly known as bagging. What is bagging you may ask? Bagging, in the Random Forest method, involves training each decision tree on a different data sample where sampling is done with replacement.
+
+
+
+
+**Model Analysis**
+
+```{r model-analysis ,message = F, warning = F}
+#creating a random forest object
+forestGoogle <- train(reviews ~ ., data = gTrain, method = "ranger", tuneLength = 4, trControl = trainControl(method = "cv", number = 5, verboseIter = F))
+# an object for computing error plot and compute error figures and variable importance
+error <- randomForest(reviews ~ ., data = gTrain, method = "ranger", tuneLength = 4, trControl = trainControl(method = "cv", number = 5, verboseIter = F), Importance = TRUE)
+```
+
+```{r variable-importance}
+##Running variable importance plot to compute what variables are influencing the model the most.
+imp <- varImpPlot(error, sort = TRUE)
+# let's save the varImp object
+# this part just creates the data.frame for the plot part
+imp <- as.data.frame(imp)
+imp$varnames <- rownames(imp) # row names to column
+imp$var_categ <- rep(1:6)
+rownames(imp) <- NULL  
+
+#plotting variable importance
+ggplot(imp, aes(x=reorder(varnames, IncNodePurity), weight=IncNodePurity, fill=as.factor(var_categ))) + 
+  geom_bar() +
+  labs(title = "variable importance")+
+  scale_fill_discrete(name="Variable Group") +
+  ylab("IncNodePurity") +
+  xlab("Variable Name")+
+  coord_flip()
+
+```
+
+
+
+
+
+
+
+**Finding:** The model considers *rating* as the most important variable in the model building followed by *category.NEWS_AND_MAGAZINES* that has the least influence.The value *IncNodePurity* suggests the  measure of variable importance based on the Gini impurity index used for the calculating the splits in trees.
+The higher the value of mean decrease accuracy or mean decrease gini score, the higher the importance of the variable to our model.
+
+**Error analysis**
+A well-fitting regression model results in predicted values close to the observed data values. The mean model, which uses the mean for every predicted value, generally would be used if there were no informative predictor variables. The fit of a proposed regression model should therefore be better than the fit of the mean model.
+
+The RMSE is the square root of the variance of the residuals. It indicates the absolute fit of the model to the data–how close the observed data points are to the model’s predicted values. Whereas R-squared is a relative measure of fit, RMSE is an absolute measure of fit. As the square root of a variance, RMSE can be interpreted as the standard deviation of the unexplained variance, and has the useful property of being in the same units as the response variable. Lower values of RMSE indicate better fit. RMSE is a good measure of how accurately the model predicts the response, and it is the most important criterion for fit if the main purpose of the model is prediction.
+
+```{r error-result}
+plot(error)
+error_figure <- getTrainPerf(forestGoogle)
+knitr::kable(error_figure)
+```
+
+
+**Finding:**This error plot provides and unbiased estimate of the error rate.Each tree uses a different bootstrap sample (~1/3 of samples) for testing.
+We observe that the error is high among the top 50 sample data trees.
+Also the trainRMSE(Root Mean Square Error) is 3.065 which is a very high figure for the data we have which implies the model did not do very well with the trained data.
+
+
+```{r model-process-sketch}
+ forestGoogle
+ plot(forestGoogle)
+```
+
+**Observation**- This plot shows the RMSE(Root Mean Square Error) with the randomly selected predictors that the model took.We also see here that the RMSE falls and rises with variance and trees generated 
+Since the RMSE reaches a high value , the model's efficiency to work on the accuracy of the prediction is low.A high RMSE implies  a model that tests well in sample, but has little predictive value when tested out of sample.
+
+
+```{r compare-actual-predicted-reviews}
+#predict with test data
+predForest <- predict(forestGoogle, gTest)
+#creating a dataframe for plotting 
+forest <- data.frame(pred = predForest, actual = gTest$reviews)
+#plotting actual vs. predicted results
+ggplot(forest, aes(pred, actual)) +
+stat_binhex(colour = "black") +
+theme_bw() +
+xlim(0, 20) +
+ylim(0, 20) +
+ggtitle("App reviews - Predicted vs. Actual") +
+theme(aspect.ratio=1) +
+scale_fill_gradient(limits=c(0, 500), low="red", high="blue")
+
+```
+
+**Observation**- The actual and predicted values of the app reviews match at very low counts as generated from the model's graph.
+
+# **Conclusion**
+The  Random forest model used here hasn't done a great job at predicitng app popularity and appears to underestimate the overall popularity of the test set. The results are somewhat encouraging - some of the variability in Reviews has been accounted with relatively simple models. App rating is therefore likely to be an important factor in determining app popularity.
 
 
 
 # References
-
 [1] [Dataset](https://www.kaggle.com/lava18/google-play-store-apps);  
 [2] [R markdown](https://bookdown.org/yihui/rmarkdown/html-document.html#tabbed-sections) ;  
 [3] [Stackoverflow](https://stackoverflow.com/questions/3993301/how-to-format-number-values-for-ggplot2-legend/15007117) ;  
