@@ -305,14 +305,14 @@ server <- function(input, output, session) {
      rval_top_categories() %>%
       ggplot(aes(
         x = reorder(category, totalInstalls),
-        y = totalInstalls/100000,
+        y = totalInstalls/1000000,
         text = paste("Category: ", category , "<br> Installs: ", totalInstalls ),
       )) +
       geom_bar(width = 0.5, stat = "identity",fill = custom_cols("vermillion")) +
       labs(
         title = "Bar Chart",
         x = "Category",
-        y = "Number of Installs(in lakhs)",
+        y = "Number of Installs(Million)",
         caption = "Source: google play store dataset"
       ) +
       scale_y_continuous(labels = scales::comma) +

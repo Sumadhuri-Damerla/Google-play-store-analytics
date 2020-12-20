@@ -1,14 +1,18 @@
 ---
 title: "Google Play Store Analytics"
 author: "Sumadhuri Damerla,Shaoor Jan,Ashjan Khan"
+subtitle: Final Report
 output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '2'
   pdf_document:
     df_print: paged
     fig_caption: yes
     number_sections: yes
     toc: yes
     toc_depth: '2'
-subtitle: Final Report
 ---
 ```{r global_options, include=FALSE}
 # global options for figure width and height
@@ -68,6 +72,8 @@ require(GGally) #for correlation plot
 library(rpart)
 library(moderndive)
 library(ggpubr)
+library(knitr)
+library(kableExtra)
 theme_set(theme_light())
 set.seed(123)
 ```
@@ -594,7 +600,7 @@ Since the dataset is dated till 2018.  We are thinking to test it by comparing t
 ## Any challenges that we might encounter
 We cannot ensure complete accuracy of the model because there is a lot of useful information missing that could have given us more insight into the Google Play Store market e.g. Demographic data could have offered insights into the rating and number of installs of apps, with respect to different regions,  different cultures and different trends popular to specific age groups. Also, it would have been interesting to see how different global trends affect the usage of the app, for instance, the current pandemic "covid-19" has called for quarantine across the globe and many people, markets and other companies are relying on smart phones and virtual connections, this will heavily increase the use of many applications, thus deviating from the general trend. 
 
-# Model
+# Models
  + The goal is to predict the rating of an application based on different parameters. Our EDA confirms that variables like number of installs, number of reviews, category of the app and the type of app (paid/free) can affect the rating of an app.  
 
  + In this section,firstly, we tried to fit our dataset for both explanatory and predictive models. We used the cross-validation technique to select the best fitting model for our dataset and lastly, we test the models by predicting ratings for a dummy app.
@@ -825,9 +831,14 @@ error_rpart <- test$rating - predicted_rating_rpart
 RMSE_lm <- sqrt(mean(error_lm ^ 2, na.rm = TRUE))
 RMSE_rpart <- sqrt(mean(error_rpart ^ 2, na.rm = TRUE))
 
-RMSE_lm
-RMSE_rpart
+#Making a dataframe to compare the models
+model <- c('Linear regression model','Recursive partitioning model')
+RMSE <- (c(RMSE_lm,RMSE_rpart))
+model_compare <- data.frame(model, RMSE)
 
+model_compare %>%
+  kable(caption = "Comparision of models")
+ 
 ```
   + We sliced the dataset into training and test datasets. Training dataset contain 6,951 observations (75% of total) and test data set contains 2,198 observations (25% of total). 
   + We trained both Linear Regression model (lm) and Recursive Partitioning model (rpart) with the training dataset.
@@ -835,7 +846,7 @@ RMSE_rpart
   + Along with performing a comparison between Linear Regression model and Recursive Partitioning model, we experimented with different explanatory variables for each model. We got the least RMSE by using installs, types, categories and reviews as explanatory variables.
 
 ## Making Predictions 
-We can predict rating of existing applications by entering different parameters like installs, types, category and reviews 
+We can predict ratings for an application with the help of parameters like installs, types, category and reviews. We choose applications from Google Play Store and used their number of installs, reviews, type and category to calculate their rating. We will compare this rating with the existing rating of the application. We will perform this experiment for three applications, to see how close the calculated values are to the original values. 
 ```{r predictive_modeling, warning=FALSE,message=FALSE}
 
 #code below:create a function to predict rating when the inputs are given
@@ -872,25 +883,19 @@ predict_rating(
     category = "EVENTS",
     reviews = 220
   )
-
-#App3: Mario Kart Tour (data from [6])
-#Actual rating:4
-predict_rating(
-    installs = 5000000,
-    type = "Free",
-    category = "GAME",
-    reviews = 1000000
-  )
-
 ```
- + **1st application**: First dummy application of type Free with 1 billion installs and 100000 reviews, belonging to TOOLS category has a predicted rating of 4.2853. This to be a reasonable prediction A Free app with 1 billion installs and 100,000 reviews must be a popular app and is expected to have high rating. But the fact that it belongs to "Tools" category, which has the third least average rating, its rating is not exceptionally high. Its rating is much better than average (4.17) but is not among the highest ratings.
+ + We chose the "Nike Training Club - Workouts & Fitness Guidance" application for our first experiment. It has 10 million downloads. It belongs to HEALTH_AND_FITNESS category and is reviewed by 272000 users. The actual value of it's rating is 4.2. We used this information to calculate the rating of this app. The Recursive Partitioning Model predicted the rating to be 4.28 which is close to the actual value. 
+ + The second application we chose is "Wedding Planner & Organizer, Guest Checklists". It has 10000 installs with 220 reviews. It is Free app and, belongs to EVENTS category. Its actual rating is 4.5. Our model calculated its rating to be 2.13. This is a considerable difference. We observed that for values that are on either extreme i.e. too low or too high, the model does not perform well. In this case, the number of reviews is very less.  
  
- + **2nd application**: Second dummy application is of type Free, with 1000 installs and 100 reviews, belonging to EVENTS category, has a predicted rating of 4.1313. This seems to be a reasonable prediction. A free app is expected to have higher installs, but as this app does not have high number of installs, indicating that the app is not the best in its segment or it has limited relevance or utility, thus we can expect low rating. But, as it belongs to EVENTS category, which has the highest average rating among all categories, its rating is not among the worst. It has a below average rating but is still not among the wort rated apps. 
+
 
 # Conclusion
+ + We have found that recursive partitioning model predicts ratings better than linear regression model with RMSE 0.51 and 0.52 respectively. 
+ + We found that our model's accuracy is better if the rating is 4 or more. This is because the majority of the dataset has ratings more than 4 which is evident from the density plot of rating which was highly left-skewed.
+ + The recursive partitioning model does not perform well with extreme values.
 
 
-
+\newpage
 
 # References
 

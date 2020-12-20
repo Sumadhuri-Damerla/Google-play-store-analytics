@@ -755,7 +755,299 @@ clean_play_store %>%
    * The apps which are free have huge success rates however there are a few exceptions to this.  
    * Apps should be optimally sized i.e. below 30MB.   
    
+# Models
+ + The goal is to predict the rating of an application based on different parameters. Our EDA confirms that variables like number of installs, number of reviews, category of the app and the type of app (paid/free) can affect the rating of an app.  
 
+ + In this section,firstly, we tried to fit our dataset for both explanatory and predictive models. We used the cross-validation technique to select the best fitting model for our dataset and lastly, we test the models by predicting ratings for a dummy app.
+
+## Correlation using Pearson method
+ + The bivariate Pearson correlation indicates whether a statistically significant linear relationship exists between two continuous variables or it indicates the strength of a linear relationship (i.e., how close the relationship is to being a perfectly straight line)
+
+ + Before creating a model, we calculated the correlation between different variables to help us select appropriate exploratory variables.
+```{r correlation_rating_installs}
+
+# Finding Correlation between rating and installs column
+cor_rat_ins <- cor(
+  clean_play_store$installs,
+  clean_play_store$rating,
+  use = "complete.obs" ,
+  method = "pearson"
+)
+names (cor_rat_ins) <- "Rating and Installs"
+
+
+# Finding Correlation between rating and log10(installs)^2
+cor_rat_ins_transformed <- cor(
+  log10(clean_play_store$installs) ^ 2,
+  clean_play_store$rating ,
+  use = "complete.obs",
+  method = "pearson"
+)
+
+names(cor_rat_ins_transformed) <- "Rating and Installs(transformed)"
+
+# print out both values
+knitr::knit_print(cor_rat_ins)
+knitr::knit_print(cor_rat_ins_transformed)
+
+```
++ **Correlation coefficient between rating and installs**: The correlation coefficient is 0.0402. This indicates a slight positive relation between these two variables. Using square of log of installs, increased the correlation coefficient to 0.1138.
+
+ 
+```{r correlation_rating_reviews}
+
+# Finding Correlation between rating and reviews
+cor_rat_rev <- cor(
+  clean_play_store$reviews,
+  clean_play_store$rating,
+  use = "complete.obs",
+  method = "pearson"
+)
+
+names(cor_rat_rev) <- "Rating and Reviews"
+
+# Finding Correlation between rating and log10(reviews)^2
+cor_rat_rev_transformed <- cor(
+  log10(clean_play_store$reviews) ^ 2,
+  clean_play_store$rating ,
+  use = "complete.obs",
+  method = "pearson"
+)
+
+names(cor_rat_rev_transformed) <- "Rating and Reviews(transformed)"
+
+# print out both values
+knitr::knit_print(cor_rat_rev)
+knitr::knit_print(cor_rat_rev_transformed)
+
+```
+ + **Correlation coefficient between rating and reviews**: The correlation coefficient is 0.05515, indicating a slight positive relationship between the two variables. Using square of log of installs, increased the correlation coefficient to 0.20308.
+ 
+\newpage
+ 
+## Explanatory/Descriptive modeling
+* The following models are used: 
+ + Linear Regression Model
+ + Local Regression Model
+ + Recursive Partitioning Model
+
+```{r descriptive_modeling_1, warning=FALSE, message=FALSE,fig.show='hold',fig.align='center'}
+# Turn off scientific notation
+options(scipen = 999)
+
+# Function for creating jitter plot
+jitterPlot <- function(x_var) {
+  if (x_var == "installs") {
+    x_axis_label <- "Installs(log10^()2 transformed)"
+    var_selected <- log10(clean_play_store$installs) ^ 2
+    
+  } else if (x_var == "size_mb") {
+    x_axis_label <- "Size(log10 transformed)"
+    var_selected <- log10(clean_play_store$size_mb)
+    
+  } else if (x_var == "reviews") {
+    x_axis_label <- "Reviews(log10^()2 transformed)"
+    var_selected <- log10(clean_play_store$reviews) ^ 2
+  }
+  
+  #Jitter plot of selected variable vs rating for rpart, loess and lm models
+  clean_play_store %>%
+    ggplot(aes_string(x = var_selected, y = "rating")) +
+    scale_x_log10() + #log 10 transformation
+    geom_jitter(na.rm = TRUE,
+                color =  custom_cols("blueish green"),
+                alpha = .4) +
+    geom_smooth(
+      method = "rpart",
+      se = FALSE,
+      aes(color = "orange"),
+      na.rm = TRUE
+    ) +
+    geom_smooth(method = "loess",
+                se = FALSE,
+                aes(color = "red"),
+                na.rm = TRUE) +
+    geom_smooth(method = "lm",
+                se = FALSE,
+                aes(color = "blue"),
+                na.rm = TRUE) +
+    labs(
+      title = "Jitter Plot",
+      subtitle = paste (x_axis_label, "vs Rating", collapse = " "),
+      x = x_axis_label,
+      y = "Rating",
+      caption = "Source: google play store dataset"
+    ) +
+    theme(legend.title = element_text(
+      hjust = 0.5,
+      face = "bold",
+      size = 10
+    )) +
+    scale_color_manual(
+      name = 'Models',
+      values = c(
+        "orange" = "orange",
+        "red" = "red",
+        "blue" = "blue",
+        "vermillion"
+      ),
+      labels = c(
+        "Linear Regression Model",
+        "Recursive Partitioning Model",
+        "Local Regression Model"
+      )
+    )
+}
+
+jitterPlot("installs") # Creating a jitter plot: installs vs rating
+jitterPlot("size_mb") # Creating a jitter plot: size_mb vs rating
+jitterPlot("reviews") # Creating a jitter plot: reviews vs rating
+```
+
+The graphs above show the fitted Linear Regression model, Local Regression model and Recursive Partitioning model for predicting rating using number of installs, size of the app and number of reviews variables. 
+
+
+## Explanatory/Descriptive modeling (cont.) 
+Continuing with our explanatory modeling, we will fit a model for rating vs installs given taking into consideration whether the app is Free or Paid.  We have also calculated sum of square residuals, R-Square value and Root Mean Square Error for the model. 
+```{r descriptive_modeling_2}
+
+# Fitting a lm model
+model_rat_instl <-
+  lm(rating ~ installs + types + category + reviews, data = clean_play_store)
+
+
+# Getting Regression points table
+points_table <- get_regression_points(model_rat_instl)
+
+points_table
+
+# Fitting a model taking into consideration the type of app(Free or Paid)
+points_table %>%
+  ggplot(aes(x = log10(installs + .0005), y = rating)) +
+  geom_jitter(na.rm = TRUE,
+              color =  custom_cols("sky blue"),
+              alpha = .4) +
+  geom_smooth(aes(color = types), method = "lm", se = FALSE) +
+  labs(
+    title = "Jitter Plot",
+    subtitle = "Log10(Installs) vs Rating",
+    x = "Log10(Installs)",
+    y = "Rating",
+    color = "Types",
+    caption = "Source: google play store dataset"
+  ) +
+  theme(legend.title = element_text(hjust = 0.5, face = "bold", size = 10))
+
+# Calculating Sum of Square residuals
+points_table %>%
+  summarise(square = sum(residual ^ 2))
+
+# Calculating R-Squared to values
+points_table %>%
+  summarise(r_squared = 1 - var(residual) / var(rating))
+
+# Calculating RMSE
+points_table %>%
+  summarise(RMSE = sqrt(mean(residual ^ 2)))
+
+```
+**Observations/Findings**: We observe that the rating of paid apps is higher than the free apps indicating better quality of paid apps. On the other hand, free apps have a higher number of installs, thus covering a wide range of audience.
+
+
+
+## Cross Validation of models
+This technique helps us identify the best fit model for our dataset i.e. model with the least root mean square error
+```{r cross_validation, warning=FALSE,message=FALSE}
+
+# Spliting our dataset into two dattasets i.e. train(75%) and test(25%)
+smp_size <- floor(0.75 * nrow(clean_play_store))
+
+train_ind <-
+  sample(seq_len(nrow(clean_play_store)), size = smp_size)
+train <- clean_play_store[train_ind,]
+test <- clean_play_store[-train_ind,]
+
+# Fitting our models, Linear Regression model and Recursive Partitioning model
+model_lm_rat_instl <-
+  lm(rating ~ installs + types + category + reviews, data = train)
+model_rpart_rat_inst <-
+  rpart(rating ~ installs + types + category + reviews , data = train)
+
+# Predicting rating for test dataset
+predicted_rating_lm <- predict(model_lm_rat_instl, newdata = test)
+predicted_rating_rpart <-
+  predict(model_rpart_rat_inst, newdata = test)
+
+# Calculating error
+error_lm <- test$rating - predicted_rating_lm
+error_rpart <- test$rating - predicted_rating_rpart
+
+# Calculating Root Mean Square Error
+RMSE_lm <- sqrt(mean(error_lm ^ 2, na.rm = TRUE))
+RMSE_rpart <- sqrt(mean(error_rpart ^ 2, na.rm = TRUE))
+
+#Making a dataframe to compare the models
+model <- c('Linear regression model','Recursive partitioning model')
+RMSE <- (c(RMSE_lm,RMSE_rpart))
+model_compare <- data.frame(model, RMSE)
+
+model_compare %>%
+  kable(caption = "Comparision of models")
+ 
+```
+  + We sliced the dataset into training and test datasets. Training dataset contain 6,951 observations (75% of total) and test data set contains 2,198 observations (25% of total). 
+  + We trained both Linear Regression model (lm) and Recursive Partitioning model (rpart) with the training dataset.
+  + After training our model, we predicted the rating for test dataset. In order to find which model fits better, we calculated the root mean square error (RMSE) for both models. RMSE values for Linear Regression model and Recursive Partitioning model are 0.5277467 and 0.5183104 respectively. We can see that RMSE value for Recursive Partitioning model is less than RMSE value for Linear Regression model implying that Recursive Partitioning model can make a better prediction than Linear Regression model. 
+  + Along with performing a comparison between Linear Regression model and Recursive Partitioning model, we experimented with different explanatory variables for each model. We got the least RMSE by using installs, types, categories and reviews as explanatory variables.
+
+## Making Predictions 
+We can predict ratings for an application with the help of parameters like installs, types, category and reviews. We choose applications from Google Play Store and used their number of installs, reviews, type and category to calculate their rating. We will compare this rating with the existing rating of the application. We will perform this experiment for three applications, to see how close the calculated values are to the original values. 
+```{r predictive_modeling, warning=FALSE,message=FALSE}
+
+#code below:create a function to predict rating when the inputs are given
+predict_rating <- function(installs,type,category,reviews){
+  #construct a predict dataset based on the inputs
+  predict_app <-
+  data.frame(
+    "installs" = installs,
+    "types" = type,
+    "category" = category,
+    "reviews" = reviews
+  )
+#Use recursive partitioning model to predict the ratings
+predicted_rating_rpart <-
+  predict(model_rpart_rat_inst, newdata = predict_app)
+#return the predicted rating value
+ predicted_rating_rpart
+}
+
+#App1: Nike Training Club - Workouts & Fitness Guidance (data from [6])
+#Actual rating: 4.2
+predict_rating(
+    installs = 100000000,
+    type = "Free",
+    category = "HEALTH_AND_FITNESS",
+    reviews = 272000
+  )
+
+#App2: Wedding Planner & Organizer, Guest Checklists (data from [6])
+#Actual rating:4.5
+predict_rating(
+    installs = 10000,
+    type = "Free",
+    category = "EVENTS",
+    reviews = 220
+  )
+```
+ + We chose the "Nike Training Club - Workouts & Fitness Guidance" application for our first experiment. It has 10 million downloads. It belongs to HEALTH_AND_FITNESS category and is reviewed by 272000 users. The actual value of it's rating is 4.2. We used this information to calculate the rating of this app. The Recursive Partitioning Model predicted the rating to be 4.28 which is close to the actual value. 
+ + The second application we chose is "Wedding Planner & Organizer, Guest Checklists". It has 10000 installs with 220 reviews. It is Free app and, belongs to EVENTS category. Its actual rating is 4.5. Our model calculated its rating to be 2.13. This is a considerable difference. We observed that for values that are on either extreme i.e. too low or too high, the model does not perform well. In this case, the number of reviews is very less.  
+ 
+
+
+# Conclusion
+ + We have found that recursive partitioning model predicts ratings better than linear regression model with RMSE 0.51 and 0.52 respectively. 
+ + We found that our model's accuracy is better if the rating is 4 or more. This is because the majority of the dataset has ratings more than 4 which is evident from the density plot of rating which was highly left-skewed.
+ + The recursive partitioning model does not perform well with extreme values.
 # References
 
 * [Dataset](https://www.kaggle.com/lava18/google-play-store-apps);
